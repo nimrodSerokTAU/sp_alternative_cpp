@@ -1,0 +1,14 @@
+#pragma once
+#include "enums.h"
+#include <vector>
+#include <string>
+#include <set>
+#include <optional>
+
+std::vector<std::string> translate_seq_h(const std::string& sequence, int seq_index, DistanceType distance_type);
+std::vector<std::vector<std::string>> translate_profile_naming(const std::vector<std::string>& profile, DistanceType distance_type);
+std::vector<std::string> get_column(const std::vector<std::vector<std::string>>& profile, int col_index);
+std::optional<std::set<std::string>> get_place_h(const std::vector<std::string>& column, int seq_index);
+double get_place_d(const std::set<std::string>& set_a, const std::set<std::string>& set_b, DistanceType distance_type);
+std::vector<std::vector<std::set<std::string>>> create_h_table(const std::vector<std::vector<std::string>>& profile_naming, DistanceType distance_type);
+double compute_distance(const std::vector<std::string>& profile_a, const std::vector<std::string>& profile_b, DistanceType distance_type);

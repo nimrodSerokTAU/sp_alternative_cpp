@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="sp_alternative_cpp/sp_alternative_cpp.vcxproj" />
+</Solution>

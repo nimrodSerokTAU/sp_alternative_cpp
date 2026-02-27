@@ -1,0 +1,311 @@
+#include "msa.h"
+#include "neighbor_joining.h"
+#include "node.h"
+#include "sop_stats.h"
+#include "w_sop_stats.h"
+#include "gaps_stats.h"
+#include "entropy_stats.h"
+#include "kmer_stats.h"
+#include "tree_stats.h"
+#include "dist_labels_stats.h"
+#include "utils.h"
+#include <fstream>
+#include <iostream>
+#include <chrono>
+#include <sstream>
+#include <algorithm>
+#include <unordered_map>
+
+MSA::MSA(const std::string& dataset_name)
+    : dataset_name(dataset_name) {}
+
+void MSA::add_sequence(const std::string& sequence, const std::string& seq_name) {
+    sequences.push_back(sequence);
+    seq_names.push_back(seq_name);
+}
+
+void MSA::set_sequences(const std::vector<std::string>& seqs, const std::vector<std::string>& names) {
+    sequences = seqs;
+    seq_names = names;
+}
+
+void MSA::read_from_fasta(const std::filesystem::path& file_path) {
+    std::ifstream in_file(file_path);
+    if (!in_file.is_open()) {
+        std::cerr << "Cannot open FASTA file: " << file_path << std::endl;
+        return;
+    }
+
+    std::string seq;
+    std::string seq_name;
+    std::string line;
+
+    while (std::getline(in_file, line)) {
+        // Trim
+        while (!line.empty() && (line.back() == '\r' || line.back() == '\n')) {
+            line.pop_back();
+        }
+        if (line.empty()) {
+            if (!seq.empty()) {
+                add_sequence(seq, seq_name);
+            }
+            return;
+        }
+        if (line[0] == '>') {
+            if (!seq.empty()) {
+                add_sequence(seq, seq_name);
+                seq.clear();
+            }
+            seq_name = line.substr(1);
+        } else {
+            seq += line;
+        }
+    }
+    if (!seq.empty()) {
+        add_sequence(seq, seq_name);
+    }
+}
+
+void MSA::order_sequences(const std::vector<std::string>& ordered_seq_names) {
+    std::unordered_map<std::string, int> names_dict;
+    for (int i = 0; i < static_cast<int>(seq_names.size()); i++) {
+        names_dict[seq_names[i]] = i;
+    }
+    std::vector<std::string> ordered_seq;
+    for (const auto& name : ordered_seq_names) {
+        auto it = names_dict.find(name);
+        if (it != names_dict.end()) {
+            ordered_seq.push_back(sequences[it->second]);
+        }
+    }
+    if (ordered_seq.size() != sequences.size()) {
+        std::cerr << "Warning: sequence count mismatch during ordering" << std::endl;
+    } else {
+        sequences = ordered_seq;
+        seq_names = ordered_seq_names;
+    }
+}
+
+void MSA::build_nj_tree() {
+    int n = static_cast<int>(sequences.size());
+    std::vector<std::vector<double>> distance_matrix(n, std::vector<double>(n, 0.0));
+    std::vector<Node*> nodes;
+    std::vector<std::unique_ptr<Node>> leaf_storage;
+
+    for (int i = 0; i < n; i++) {
+        auto node = std::make_unique<Node>(i, std::set<std::string>{seq_names[i]}, std::vector<Node*>{}, 0);
+        node->fill_newick();
+        nodes.push_back(node.get());
+        leaf_storage.push_back(std::move(node));
+        for (int j = i; j < n; j++) {
+            double kd = calc_kimura_distance_from_other(sequences[i], sequences[j]);
+            distance_matrix[i][j] = kd;
+            distance_matrix[j][i] = kd;
+        }
+    }
+
+    NeighborJoining nj(distance_matrix, nodes);
+
+    // Transfer ownership
+    auto new_tree = std::make_unique<UnrootedTree>(nj.tree_res.anchor, nj.tree_res.all_nodes);
+    for (auto& ptr : leaf_storage) {
+        new_tree->owned_nodes.push_back(std::move(ptr));
+    }
+    for (auto& ptr : nj.owned_nodes) {
+        new_tree->owned_nodes.push_back(std::move(ptr));
+    }
+    tree = std::move(new_tree);
+}
+
+void MSA::set_tree(UnrootedTree&& t) {
+    tree = std::make_unique<UnrootedTree>(std::move(t));
+}
+
+int MSA::get_msa_len() const {
+    return sequences.empty() ? 0 : static_cast<int>(sequences[0].size());
+}
+
+int MSA::get_taxa_num() const {
+    return static_cast<int>(sequences.size());
+}
+
+void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
+                                 const std::vector<SPScore>& sp_models,
+                                 const std::filesystem::path& output_dir_path,
+                                 const UnrootedTree* true_tree,
+                                 bool is_init_file) {
+    // Basic stats
+    {
+        std::vector<std::string> basic_cols = {"code", "taxa_num", "msa_length"};
+        std::vector<StatValue> basic_vals = {StatValue(dataset_name), StatValue(get_taxa_num()), StatValue(get_msa_len())};
+        print_stats_file(basic_vals, output_dir_path, "basic_stats", is_init_file, basic_cols);
+    }
+
+    DistanceLabelsStats dist_labels_stats(dataset_name, get_taxa_num(), get_msa_len());
+
+    // Distance labels
+    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::DISTANCE_LABELS)) {
+        auto start = std::chrono::steady_clock::now();
+        dist_labels_stats.set_my_distance_from_true(true_msa.sequences, sequences);
+        print_stats_file(dist_labels_stats.get_my_features_as_list(), output_dir_path,
+                          stats_output_to_string(StatsOutput::DISTANCE_LABELS), is_init_file,
+                          dist_labels_stats.get_ordered_col_names());
+        auto end = std::chrono::steady_clock::now();
+        std::cout << "Elapsed time for Labels: "
+                  << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
+    }
+
+    // Entropy
+    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::ENTROPY)) {
+        auto start = std::chrono::steady_clock::now();
+        EntropyStats entropy_stats(dataset_name, get_taxa_num(), get_msa_len());
+        entropy_stats.calc_entropy(sequences);
+        print_stats_file(entropy_stats.get_my_features_as_list(), output_dir_path,
+                          stats_output_to_string(StatsOutput::ENTROPY), is_init_file,
+                          entropy_stats.get_ordered_col_names());
+        auto end = std::chrono::steady_clock::now();
+        std::cout << "Elapsed time for Entropy: "
+                  << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
+    }
+
+    // Gaps
+    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::GAPS)) {
+        auto start = std::chrono::steady_clock::now();
+        GapStats gaps_stats(dataset_name, get_taxa_num(), get_msa_len());
+        gaps_stats.calc_gaps_values(sequences);
+        print_stats_file(gaps_stats.get_my_features_as_list(), output_dir_path,
+                          stats_output_to_string(StatsOutput::GAPS), is_init_file,
+                          gaps_stats.get_ordered_col_names());
+        auto end = std::chrono::steady_clock::now();
+        std::cout << "Elapsed time for Gaps: "
+                  << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
+    }
+
+    // K-mer
+    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::K_MER)) {
+        auto start = std::chrono::steady_clock::now();
+        for (int k_value : config.k_values) {
+            KMerStats kmer_stats(dataset_name, get_taxa_num(), get_msa_len(), k_value);
+            kmer_stats.set_k_mer_features(sequences);
+            print_stats_file(kmer_stats.get_my_features_as_list(), output_dir_path,
+                              stats_output_to_string(StatsOutput::K_MER), is_init_file,
+                              kmer_stats.get_ordered_col_names_with_k_value(), "", 0, 0,
+                              std::to_string(k_value));
+        }
+        auto end = std::chrono::steady_clock::now();
+        std::cout << "Elapsed time for Kmer: "
+                  << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
+    }
+
+    // Tree
+    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::TREE)) {
+        auto start = std::chrono::steady_clock::now();
+        build_nj_tree();
+        TreeStats tree_stats(dataset_name, get_taxa_num(), get_msa_len());
+        tree_stats.set_tree_stats(tree->get_branches_lengths_list(), *tree, sequences, seq_names);
+        print_stats_file(tree_stats.get_my_features_as_list(), output_dir_path,
+                          stats_output_to_string(StatsOutput::TREE), is_init_file,
+                          tree_stats.get_ordered_col_names());
+
+        if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::RF_LABEL)) {
+            if (true_tree) {
+                dist_labels_stats.set_rf_from_true(*tree, *true_tree);
+                auto [rf_data, rf_cols] = dist_labels_stats.get_print_rf();
+                print_stats_file(rf_data, output_dir_path,
+                                  stats_output_to_string(StatsOutput::RF_LABEL), is_init_file, rf_cols);
+            }
+        }
+        auto end = std::chrono::steady_clock::now();
+        std::cout << "Elapsed time for Tree: "
+                  << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
+    }
+
+    // SP/SOP
+    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::SP)) {
+        auto start = std::chrono::steady_clock::now();
+        for (const auto& sp : sp_models) {
+            SopStats sop_stats(dataset_name, get_taxa_num(), get_msa_len());
+            sop_stats.set_my_sop_score_parts(sp, sequences);
+            print_stats_file(sop_stats.get_my_features_as_list(), output_dir_path,
+                              stats_output_to_string(StatsOutput::SP), is_init_file,
+                              sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost),
+                              sp.model_name, sp.go_cost, sp.ge_cost);
+        }
+        auto end = std::chrono::steady_clock::now();
+        std::cout << "Elapsed time for regular Sop: "
+                  << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
+    }
+
+    // Weighted SP
+    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::W_SP)) {
+        auto start = std::chrono::steady_clock::now();
+        if (!config.stats_output.count(StatsOutput::ALL) && !config.stats_output.count(StatsOutput::TREE)) {
+            build_nj_tree();
+        }
+        for (const auto& sp : sp_models) {
+            WSopStats w_sop_stats(dataset_name, get_taxa_num(), get_msa_len());
+            w_sop_stats.calc_seq_weights(config.additional_weights, sequences, seq_names, *tree);
+            w_sop_stats.calc_w_sp(sequences, sp);
+            print_stats_file(w_sop_stats.get_my_features_as_list(), output_dir_path,
+                              stats_output_to_string(StatsOutput::W_SP), is_init_file,
+                              w_sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost),
+                              sp.model_name, sp.go_cost, sp.ge_cost);
+        }
+        auto end = std::chrono::steady_clock::now();
+        std::cout << "Elapsed time for wSop: "
+                  << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
+    }
+}
+
+void MSA::print_stats_file(const std::vector<StatValue>& stats_data,
+                             const std::filesystem::path& output_dir_path,
+                             const std::string& file_name,
+                             bool is_init_file,
+                             const std::vector<std::string>& col_names,
+                             const std::string& model_name,
+                             double go_val, double ge_val,
+                             const std::string& k_value) {
+    std::string model_str;
+    if (!model_name.empty()) {
+        model_str = "_" + model_name + "_GO_" + std::to_string(static_cast<int>(go_val)) +
+                    "_GE_" + std::to_string(ge_val);
+    }
+    std::string k_value_str;
+    if (!k_value.empty()) {
+        k_value_str = "_K" + k_value;
+    }
+
+    std::filesystem::path output_file = output_dir_path / (file_name + model_str + k_value_str + ".csv");
+
+    if (is_init_file) {
+        std::ofstream outfile(output_file);
+        // Write header
+        for (size_t i = 0; i < col_names.size(); i++) {
+            if (i > 0) outfile << ",";
+            outfile << col_names[i];
+        }
+        outfile << "\n";
+        // Write data
+        for (size_t i = 0; i < stats_data.size(); i++) {
+            if (i > 0) outfile << ", ";
+            outfile << BasicStats::stat_value_to_string(stats_data[i]);
+        }
+        outfile << "\n";
+    } else {
+        std::ofstream outfile(output_file, std::ios::app);
+        for (size_t i = 0; i < stats_data.size(); i++) {
+            if (i > 0) outfile << ", ";
+            outfile << BasicStats::stat_value_to_string(stats_data[i]);
+        }
+        outfile << "\n";
+    }
+}
+
+void MSA::print_to_fasta_file(const std::filesystem::path& dir_path) const {
+    std::filesystem::path output_file = dir_path / (dataset_name + ".fas");
+    std::ofstream outfile(output_file);
+    for (size_t i = 0; i < sequences.size(); i++) {
+        outfile << ">" << seq_names[i] << "\n";
+        outfile << sequences[i] << "\n";
+    }
+}
