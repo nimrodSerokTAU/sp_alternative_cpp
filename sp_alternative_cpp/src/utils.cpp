@@ -4,6 +4,8 @@
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
+#include <iostream>
+#include <filesystem>
 
 std::pair<std::vector<std::vector<int>>, std::unordered_map<std::string, int>>
 read_matching_matrix(const std::string& file_path) {
@@ -11,7 +13,9 @@ read_matching_matrix(const std::string& file_path) {
     std::vector<std::vector<int>> match_matrix;
 
     std::ifstream infile(file_path);
+    
     if (!infile.is_open()) {
+        std::cerr << "Cannot open file: [" << file_path << "]" << std::endl;
         throw std::runtime_error("Cannot open matrix file: " + file_path);
     }
 
