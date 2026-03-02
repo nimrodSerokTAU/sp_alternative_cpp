@@ -152,5 +152,75 @@ namespace spalternativeUnitTests
 				Assert::AreEqual(res[i], expected[i]);
 			}
 		}
+
+		TEST_METHOD(compute_sp_s_and_sp_ge)
+		{
+			EvoModel evoModel1(0, -5, "Blosum50");
+			vector<EvoModel> models = { evoModel1 };
+			Configuration configuration1(models);
+			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			vector<string> profile1 = {
+				"ARNDC---HI",
+				"AA-DCQ--AI",
+				"AA--CQEGHI"
+			};
+			SPScore::SpSAndGe res = sp1.compute_sp_s_and_sp_ge(profile1);
+
+			vector<double> vw1 = { 1.0, 1.0, 1.0 };
+			vector<vector<double>> vvw1 = { vw1 };
+			vector<double> resNaive = sp1.compute_naive_sp_score(profile1, &vvw1);
+			double totalScore = res.sp_match_score + res.sp_mismatch_score + res.ge_score;
+			Assert::AreEqual(totalScore, resNaive[0]);
+			Assert::AreEqual(res.sp_mismatch_score + res.sp_match_score, 91.0);
+			Assert::AreEqual(res.ge_score, -50.0);
+		}
+
+		TEST_METHOD(only_gap_open_and_ext_cost_same)
+		{
+			EvoModel evoModel1(-1, -5, "Blosum50");
+			vector<EvoModel> models = { evoModel1 };
+			Configuration configuration1(models);
+			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			vector<string> profile1 = {
+				"ARNDC---HI",
+				"AA-DCQ--AI",
+				"AA--CQEGHI"
+			};
+			// ARNDC-- - HI
+			// AA - DCQ--AI
+			// ----> 2
+			//
+			// ARNDC-- - HI
+			// AA--CQEGHI
+			// ----> 2
+			//
+			// AA - DCQ--AI
+			// AA--CQEGHI
+			// ----> 2
+
+			SPScore::SpGapOpen res = sp1.compute_sp_gap_open(profile1);
+			Assert::AreEqual(res.sp_gp_open, -6.0);
+			Assert::AreEqual(res.sp_gpo_count, 6);
+		}
+
+		TEST_METHOD(compute_efficient_sp)
+		{
+			EvoModel evoModel1(-1, -5, "Blosum50");
+			vector<EvoModel> models = { evoModel1 };
+			Configuration configuration1(models);
+			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			vector<string> profile1 = {
+				"ARNDC---HI",
+				"AA-DCQ--AI",
+				"AA--CQEGHI"
+			};
+
+			double efficientRes = sp1.compute_efficient_sp(profile1);
+			vector<double> vw1 = { 1.0, 1.0, 1.0 };
+			vector<vector<double>> vvw1 = { vw1 };
+			vector<double> resNaive = sp1.compute_naive_sp_score(profile1, &vvw1);
+
+			Assert::AreEqual(efficientRes, resNaive[0]);
+		}
 	};
 }
