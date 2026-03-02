@@ -3,6 +3,6 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="sp_alternative_cpp/sp_alternative_cpp.vcxproj" />
+  <Project Path="sp_alternative_cpp/sp_alternative_cpp.vcxproj" Id="07d5d8fb-2036-41df-994e-b6b032ccd1ac" />
   <Project Path="UnitTest1/UnitTest1.vcxproj" />
 </Solution>
