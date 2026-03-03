@@ -335,7 +335,6 @@ namespace spalternativeUnitTests
 			for (size_t i = 0; i < res2_exprected.size(); ++i)
 			{
 				Assert::IsTrue(res2_exprected[i] == res_2[i]);
-
 			}
 
 			std::optional<std::set<std::string>> res_3_0 = std::set<std::string>{ "S^1_1", "S^2_1" };
@@ -351,9 +350,133 @@ namespace spalternativeUnitTests
 			for (size_t i = 0; i < res3_exprected.size(); ++i)
 			{
 				Assert::IsTrue(res3_exprected[i] == res_3[i]);
-
 			}
 
 		}
+
+		TEST_METHOD(compute_dpos_distance_for_same)
+		{
+			vector<string> profile1 = {
+				"AATATTG-",
+				"A--ATTAG",
+				"A--A-TAG"
+			};
+			double res = compute_distance(profile1, profile1, DistanceType::D_SEQ);
+			Assert::AreEqual(res, 0.0);
+		}
+
+		TEST_METHOD(compute_dpos_distance_for_diff)
+		{
+			vector<string> profile1 = {
+				"AATATTG-",
+				"A--ATTAG",
+				"A--A-TAG"
+			};
+
+			vector<string> profile2 = {
+				"AATAT-TG",
+				"A-A-TTAG",
+				"A--A-TAG"
+			};
+			double res = compute_distance(profile1, profile2, DistanceType::D_POS);
+			Assert::AreEqual(res, 0.417, 0.001);
+		}
+
+		TEST_METHOD(dpos_distance_for_diff_case_a)
+		{
+			vector<string> profile1 = {
+				"AATATTG-",
+				"A--ATTAG",
+				"A--A-TAG"
+			};
+
+			vector<string> profile2 = {
+				"A-ATAT-TG",
+				"A-A--TTAG",
+				"A--A-T-AG"
+			};
+			double res = compute_distance(profile1, profile2, DistanceType::D_POS);
+			Assert::AreEqual(res, 0.639, 0.001);
+		}
+
+		TEST_METHOD(dpos_for_diff_length_case_qu_a)
+		{
+			vector<string> profile1 = {
+				"GCATCATT-G",
+				"GC---ATTAG",
+				"GC---AT-AG"
+			};
+
+			vector<string> profile2 = {
+				"GCATCATT-G",
+				"GCA---TTAG",
+				"GCA----TAG"
+			};
+
+			vector<string> profile3 = {
+				"GCATCATT-G-",
+				"GC---ATT-AG",
+				"GC---A-TA-G"
+			};
+
+			double res_1_2 = compute_distance(profile1, profile2, DistanceType::D_POS);
+			double res_1_3 = compute_distance(profile1, profile3, DistanceType::D_POS);
+			Assert::AreEqual(res_1_2, 0.364, 0.001);
+			Assert::AreEqual(res_1_3, 0.295, 0.001);
+		}
+
+		TEST_METHOD(dseq_for_diff_length_case_qu_a)
+		{
+			vector<string> profile1 = {
+				"GCATCATT-G",
+				"GC---ATTAG",
+				"GC---AT-AG"
+			};
+
+			vector<string> profile2 = {
+				"GCATCATT-G",
+				"GCA---TTAG",
+				"GCA----TAG"
+			};
+
+			vector<string> profile3 = {
+				"GCATCATT-G-",
+				"GC---ATT-AG",
+				"GC---A-TA-G"
+			};
+
+			double res_1_2 = compute_distance(profile1, profile2, DistanceType::D_SEQ);
+			double res_1_3 = compute_distance(profile1, profile3, DistanceType::D_SEQ);
+			Assert::AreEqual(res_1_2, 0.273, 0.001);
+			Assert::AreEqual(res_1_3, 0.265, 0.001);
+		}
+
+		TEST_METHOD(dssp_for_diff_length_case_qu_a)
+		{
+			vector<string> profile1 = {
+				"GCATCATT-G",
+				"GC---ATTAG",
+				"GC---AT-AG"
+			};
+
+			vector<string> profile2 = {
+				"GCATCATT-G",
+				"GCA---TTAG",
+				"GCA----TAG"
+			};
+
+			vector<string> profile3 = {
+				"GCATCATT-G-",
+				"GC---ATT-AG",
+				"GC---A-TA-G"
+			};
+
+			double res_1_2 = compute_distance(profile1, profile2, DistanceType::D_SSP);
+			double res_1_3 = compute_distance(profile1, profile3, DistanceType::D_SSP);
+			Assert::AreEqual(res_1_2, 0.381, 0.001);
+			Assert::AreEqual(res_1_3, 0.4, 0.001);
+		}
+
+
 	};
 }
