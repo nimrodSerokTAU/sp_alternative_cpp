@@ -5,6 +5,7 @@
 #include "../sp_alternative_cpp/include/config.h"
 #include "../sp_alternative_cpp/include/sp_score.h"
 #include <numeric>
+#include "../sp_alternative_cpp/include/distance_calc.h"
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std;
 
@@ -221,6 +222,138 @@ namespace spalternativeUnitTests
 			vector<double> resNaive = sp1.compute_naive_sp_score(profile1, &vvw1);
 
 			Assert::AreEqual(efficientRes, resNaive[0]);
+		}
+
+		TEST_METHOD(compare_naive_sop_to_efficient)
+		{
+			EvoModel evoModel1(-10, -0.5, "Blosum62");
+			vector<EvoModel> models = { evoModel1 };
+			Configuration configuration1(models);
+			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			vector<string> profile1 = {
+				"-EETTEESLKRIVADNENRAEQVHLYLSTTFVIADPEPKYGIVRSKDMNWYEQKTHKFLGMGPVLGVQFAF",
+				"YEETSEESL-RIAADNENRAE-VHLYLGTNFVIADPEPKW--LRSKDVNWYDQRTH-FLGMGPVLGIQFLI",
+				"YEETSEES----VADNENRAE-VHLILSTNFVIADPEPKWG-LRSKDMNWYDQRTH--LGMGPVLGIQFLF",
+				"YEETSEESLKRIVADNENRAEKVHLILSTNFVIADPEPKWG--RSKDMNWYDQRTHKFLGMGPVLGIQFLF"
+			};
+
+			double efficientRes = sp1.compute_efficient_sp(profile1);
+			vector<double> vw1 = { 1.0, 1.0, 1.0, 1.0 };
+			vector<vector<double>> vvw1 = { vw1 };
+			vector<double> resNaive = sp1.compute_naive_sp_score(profile1, &vvw1);
+
+			Assert::AreEqual(efficientRes, resNaive[0]);
+		}
+
+		TEST_METHOD(compare_naive_sop_to_efficient_min_example)
+		{
+			EvoModel evoModel1(-10, -0.5, "Blosum62");
+			vector<EvoModel> models = { evoModel1 };
+			Configuration configuration1(models);
+			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			vector<string> profile1 = {
+				"LLKYR-K",
+				"Y--ERAK",
+				"YL----K",
+				"YLKE-AK"
+			};
+
+			double efficientRes = sp1.compute_efficient_sp(profile1);
+			vector<double> vw1 = { 1.0, 1.0, 1.0, 1.0 };
+			vector<vector<double>> vvw1 = { vw1 };
+			vector<double> resNaive = sp1.compute_naive_sp_score(profile1, &vvw1);
+
+			Assert::AreEqual(efficientRes, resNaive[0]);
+		}
+
+		TEST_METHOD(translate_profile_hpos)
+		{
+			vector<string> profile1 = {
+				"AATATTG-",
+				"A--ATTAG",
+				"A--A-TAG"
+			};
+
+			vector<vector<string>> res = translate_profile_naming(profile1, DistanceType::D_POS);
+			vector<string> vw1 = { "S^1_1", "S^1_2", "S^1_3", "S^1_4", "S^1_5", "S^1_6", "S^1_7", "G^1_7" };
+			vector<string> vw2 = { "S^2_1", "G^2_1", "G^2_1", "S^2_2", "S^2_3", "S^2_4", "S^2_5", "S^2_6" };
+			vector<string> vw3 = { "S^3_1", "G^3_1", "G^3_1", "S^3_2", "G^3_2", "S^3_3", "S^3_4", "S^3_5" };
+			vector<vector<string>> expected = { vw1, vw2, vw3 };
+
+			Assert::AreEqual(expected.size(), res.size());
+
+			for (size_t i = 0; i < expected.size(); ++i)
+			{
+				Assert::AreEqual(expected[i].size(), res[i].size());
+
+				for (size_t j = 0; j < expected[i].size(); ++j)
+				{
+					Assert::AreEqual(
+						std::wstring(expected[i][j].begin(), expected[i][j].end()),
+						std::wstring(res[i][j].begin(), res[i][j].end())
+					);
+				}
+			}
+
+		}
+
+		TEST_METHOD(get_specific_hpos)
+		{ 
+			vector<string> profile1 = {
+				"AATATTG-",
+				"A--ATTAG",
+				"A--A-TAG"
+			};
+
+			vector<vector<string>> trans_prof = translate_profile_naming(profile1, DistanceType::D_POS);
+
+			std::vector<std::optional<std::set<std::string>>> res_2;
+			std::vector<std::optional<std::set<std::string>>> res_3;
+
+			for (size_t col_inx = 0; col_inx < profile1[0].size(); ++col_inx)
+			{
+				std::vector<std::string> col = get_column(trans_prof, col_inx);
+
+				std::optional<std::set<std::string>> hpos_2 = get_place_h(col, 1);
+				res_2.push_back(hpos_2);
+
+				std::optional<std::set<std::string>> hpos_3 = get_place_h(col, 2);
+				res_3.push_back(hpos_3);
+			}
+
+			std::optional<std::set<std::string>> res_2_0 = std::set<std::string>{ "S^1_1", "S^3_1" };
+			std::optional<std::set<std::string>> res_2_3 = std::set<std::string>{ "S^1_4", "S^3_2" };
+			std::optional<std::set<std::string>> res_2_4 = std::set<std::string>{ "S^1_5", "G^3_2" };
+			std::optional<std::set<std::string>> res_2_5 = std::set<std::string>{ "S^1_6", "S^3_3" };
+			std::optional<std::set<std::string>> res_2_6 = std::set<std::string>{ "S^1_7", "S^3_4" };
+			std::optional<std::set<std::string>> res_2_7 = std::set<std::string>{ "G^1_7", "S^3_5" };
+
+			vector<std::optional<std::set<std::string>>> res2_exprected = { res_2_0, std::nullopt, std::nullopt, res_2_3, res_2_4, res_2_5, res_2_6, res_2_7 };
+
+			Assert::AreEqual(res2_exprected.size(), res_2.size());
+
+			for (size_t i = 0; i < res2_exprected.size(); ++i)
+			{
+				Assert::IsTrue(res2_exprected[i] == res_2[i]);
+
+			}
+
+			std::optional<std::set<std::string>> res_3_0 = std::set<std::string>{ "S^1_1", "S^2_1" };
+			std::optional<std::set<std::string>> res_3_3 = std::set<std::string>{ "S^1_4", "S^2_2" };
+			std::optional<std::set<std::string>> res_3_5 = std::set<std::string>{ "S^1_6", "S^2_4" };
+			std::optional<std::set<std::string>> res_3_6 = std::set<std::string>{ "S^1_7", "S^2_5" };
+			std::optional<std::set<std::string>> res_3_7 = std::set<std::string>{ "G^1_7", "S^2_6" };
+
+			vector<std::optional<std::set<std::string>>> res3_exprected = { res_3_0, std::nullopt, std::nullopt, res_3_3, std::nullopt, res_3_5, res_3_6, res_3_7 };
+
+			Assert::AreEqual(res3_exprected.size(), res_3.size());
+
+			for (size_t i = 0; i < res3_exprected.size(); ++i)
+			{
+				Assert::IsTrue(res3_exprected[i] == res_3[i]);
+
+			}
+
 		}
 	};
 }
