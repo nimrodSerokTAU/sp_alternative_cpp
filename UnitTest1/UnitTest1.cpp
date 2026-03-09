@@ -813,5 +813,23 @@ namespace spalternativeUnitTests
 			}
 		}
 
+		TEST_METHOD(dpos_for_diff_length_case_e)
+		{
+			vector<string> profileA = {
+				"ATAG",
+				"-T-G",
+				"CG-G"
+			};
+
+			vector<string> profileB = {
+				"AT-AG",
+				"--T-G",
+				"-CG-G"
+			};
+
+			double res = compute_distance(profileB, profileA, DistanceType::D_POS);
+			Assert::AreEqual(res, 0.333, 0.001);
+		}
+
 	};
 }
