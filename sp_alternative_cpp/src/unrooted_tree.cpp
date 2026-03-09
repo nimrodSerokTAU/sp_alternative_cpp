@@ -213,7 +213,9 @@ std::pair<Node*, std::vector<Node*>> create_a_tree_from_newick(const std::string
     size_t i = 0;
 
     while (i < newick.size()) {
-        if (newick[i] == '(') {
+        if (newick[i] == ' ') {
+            i++;
+        } else if (newick[i] == '(') {
             level++;
             if (level >= static_cast<int>(open_nodes_per_level.size())) {
                 open_nodes_per_level.resize(level + 10);
