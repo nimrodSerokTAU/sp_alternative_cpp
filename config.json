@@ -1,0 +1,5 @@
+{
+  "input_tree": "tree1.newick",
+  "reference_tree": "tree2.newick",
+  "distance": "rf"
+}
