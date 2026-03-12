@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <set>
 
 using namespace std;
 
@@ -20,12 +21,7 @@ enum class WeightMethods {
     CLUSTAL_DIFFERENTIAL_SUM
 };
 
-unordered_map<string, WeightMethods> str_to_enum_weight_methods = {
-    {"HENIKOFF_WG", WeightMethods::HENIKOFF_WG},
-    {"HENIKOFF_WOG", WeightMethods::HENIKOFF_WOG},
-    {"CLUSTAL_MID_ROOT", WeightMethods::CLUSTAL_MID_ROOT},
-    {"CLUSTAL_DIFFERENTIAL_SUM", WeightMethods::CLUSTAL_DIFFERENTIAL_SUM}
-};
+set<WeightMethods> strToEnumWeightMethods(const set<string>& strings);
 
 enum class AffineGapMatrixTypes {
     M,
@@ -46,18 +42,7 @@ enum class StatsOutput {
     ALL_FEATURES
 };
 
-unordered_map<string, StatsOutput> str_to_enum_stats_output = {
-    {"SP", StatsOutput::SP},
-    {"GAPS", StatsOutput::GAPS},
-    {"ENTROPY", StatsOutput::ENTROPY},
-    {"TREE", StatsOutput::TREE},
-    {"K_MER", StatsOutput::K_MER},
-    { "W_SP", StatsOutput::W_SP },
-    { "DISTANCE_LABELS", StatsOutput::DISTANCE_LABELS },
-    {"RF_LABEL", StatsOutput::RF_LABEL},
-    {"ALL", StatsOutput::ALL},
-    {"ALL_FEATURES", StatsOutput::ALL_FEATURES}
-};
+set<StatsOutput> strToEnumStatsOutput(const set<string>& strings);
 
 enum class DistanceType {
     D_SSP,

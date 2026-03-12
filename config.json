@@ -13,7 +13,7 @@
 		{"gap_open_cost":-10, "gap_extend_cost": -0.2, "matrix_file_name": "PAM250"},
 		{"gap_open_cost":-6 , "gap_extend_cost": -0.2, "matrix_file_name": "PAM250"}
 	],
-	"sop_clac_type": 1,
+	"sop_calc_type": 1,
 	"additional_weights": [
 		"HENIKOFF_WG",
 		"HENIKOFF_WOG",

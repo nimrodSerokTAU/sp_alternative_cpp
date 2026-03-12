@@ -128,6 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="enums.cpp" />
     <ClCompile Include="sp_alternative_cpp.cpp" />
     <ClCompile Include="src\distance_calc.cpp" />
     <ClCompile Include="src\dist_labels_stats.cpp" />
