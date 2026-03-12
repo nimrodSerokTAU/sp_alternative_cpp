@@ -13,7 +13,8 @@ using namespace std;
 
 namespace spalternativeUnitTests
 {
-
+	string blosum50Path = "D:/code/sp_alternative/sp_alternative/input_config_files/Blosum50.txt";
+	string blosum62Path = "D:/code/sp_alternative/sp_alternative/input_config_files/Blosum62.txt";
 	string newick_of_AATF = "((((Macropus:0.051803,Monodelphis:  0.066021): 0.016682,Sarcophilus:0.068964):0.114355,((Echinops:0.104144,(Loxodonta:0.076474,Procavia:0.076193):0.011550):0.013015,((Choloepus:0.056091,Dasypus:0.040600):0.013681,(((((Callithrix:0.032131,((((Gorilla:0.007042,(Homo:0.002445,Pan:0.002450):0.001237):0.003689,Pongo:0.007508):0.002384,Nomascus:0.015696):0.004674,Macaca:0.013752):0.012205):0.029730,((Microcebus:0.037066,Otolemur:0.050935):0.008091,Tarsius:0.064938):0.007305):0.003377,Tupaia:0.090946):0.000699,(((Cavia:0.116826,(Dipodomys:0.080386,(Mus:0.040313,Rattus:0.033872):0.122329):0.013314):0.000298,Ictidomys:0.062932):0.011064,(Ochotona:0.087746,Oryctolagus:0.057769):0.035947):0.002130):0.006931,(Erinaceus:0.094727,(((((Bos:0.062659,Tursiops:0.024374):0.009782,Sus:0.064336):0.006134,Vicugna:0.049961):0.021643,Equus:0.046559):0.002728,(Sorex:0.126677,((Myotis:0.050452,Pteropus:0.047740):0.006495,(Felis:0.042414,(Canis:0.036675,(Mustela:0.027691,Ailuropoda:0.037553):0.004251):0.008141):0.019485):0.000485):0.003533):0.000528):0.005645):0.012900):0.002853):0.133251):0.019558,Ornithorhynchus:0.195576);";
 
 	TEST_CLASS(spalternativeUnitTests)
@@ -25,7 +26,7 @@ namespace spalternativeUnitTests
 			EvoModel evoModel1(-1, -1, "Blosum50");
 			vector<EvoModel> models = { evoModel1 };
 			Configuration configuration1(models);
-			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			SPScore sp1(evoModel1, blosum50Path);
 			vector<string> profile1 = {
 				"ARNDCQEGHI",
 				"ARNDCQEGHI",
@@ -44,7 +45,7 @@ namespace spalternativeUnitTests
 			EvoModel evoModel1(-1, -5, "Blosum50");
 			vector<EvoModel> models = { evoModel1 };
 			Configuration configuration1(models);
-			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			SPScore sp1(evoModel1, blosum50Path);
 			vector<string> profile1 = {
 				"ARNDCQEGHI",
 				"AANDCQEGAI",
@@ -64,7 +65,7 @@ namespace spalternativeUnitTests
 			EvoModel evoModel1(-1, -5, "Blosum50");
 			vector<EvoModel> models = { evoModel1 };
 			Configuration configuration1(models);
-			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			SPScore sp1(evoModel1, blosum50Path);
 			vector<string> profile1 = {
 				"ARNDCQ-GHI",
 				"AANDCQ-GAI",
@@ -83,7 +84,7 @@ namespace spalternativeUnitTests
 			EvoModel evoModel1(0, 0, "Blosum50");
 			vector<EvoModel> models = { evoModel1 };
 			Configuration configuration1(models);
-			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			SPScore sp1(evoModel1, blosum50Path);
 			vector<string> profile1 = {
 				"ARNDC---HI",
 				"AA-DCQ--AI",
@@ -102,7 +103,7 @@ namespace spalternativeUnitTests
 			EvoModel evoModel1(0, -5, "Blosum50");
 			vector<EvoModel> models = { evoModel1 };
 			Configuration configuration1(models);
-			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			SPScore sp1(evoModel1, blosum50Path);
 			vector<string> profile1 = {
 				"ARNDC---HI",
 				"AA-DCQ--AI",
@@ -121,7 +122,7 @@ namespace spalternativeUnitTests
 			EvoModel evoModel1(-1, -5, "Blosum50");
 			vector<EvoModel> models = { evoModel1 };
 			Configuration configuration1(models);
-			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			SPScore sp1(evoModel1, blosum50Path);
 			vector<string> profile1 = {
 				"ARNDC---HI",
 				"AA-DCQ--AI",
@@ -140,7 +141,7 @@ namespace spalternativeUnitTests
 			EvoModel evoModel1(-1, -5, "Blosum50");
 			vector<EvoModel> models = { evoModel1 };
 			Configuration configuration1(models);
-			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			SPScore sp1(evoModel1, blosum50Path);
 			vector<string> profile1 = {
 				"ARNDC---HI",
 				"AA-DCQ--AI",
@@ -164,7 +165,7 @@ namespace spalternativeUnitTests
 			EvoModel evoModel1(0, -5, "Blosum50");
 			vector<EvoModel> models = { evoModel1 };
 			Configuration configuration1(models);
-			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			SPScore sp1(evoModel1, blosum50Path);
 			vector<string> profile1 = {
 				"ARNDC---HI",
 				"AA-DCQ--AI",
@@ -186,7 +187,7 @@ namespace spalternativeUnitTests
 			EvoModel evoModel1(-1, -5, "Blosum50");
 			vector<EvoModel> models = { evoModel1 };
 			Configuration configuration1(models);
-			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			SPScore sp1(evoModel1, blosum50Path);
 			vector<string> profile1 = {
 				"ARNDC---HI",
 				"AA-DCQ--AI",
@@ -214,7 +215,7 @@ namespace spalternativeUnitTests
 			EvoModel evoModel1(-1, -5, "Blosum50");
 			vector<EvoModel> models = { evoModel1 };
 			Configuration configuration1(models);
-			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			SPScore sp1(evoModel1, blosum50Path);
 			vector<string> profile1 = {
 				"ARNDC---HI",
 				"AA-DCQ--AI",
@@ -234,7 +235,7 @@ namespace spalternativeUnitTests
 			EvoModel evoModel1(-10, -0.5, "Blosum62");
 			vector<EvoModel> models = { evoModel1 };
 			Configuration configuration1(models);
-			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			SPScore sp1(evoModel1, blosum62Path);
 			vector<string> profile1 = {
 				"-EETTEESLKRIVADNENRAEQVHLYLSTTFVIADPEPKYGIVRSKDMNWYEQKTHKFLGMGPVLGVQFAF",
 				"YEETSEESL-RIAADNENRAE-VHLYLGTNFVIADPEPKW--LRSKDVNWYDQRTH-FLGMGPVLGIQFLI",
@@ -255,7 +256,7 @@ namespace spalternativeUnitTests
 			EvoModel evoModel1(-10, -0.5, "Blosum62");
 			vector<EvoModel> models = { evoModel1 };
 			Configuration configuration1(models);
-			SPScore sp1(evoModel1, "D:/code/sp_alternative/sp_alternative/input_config_files");
+			SPScore sp1(evoModel1, blosum62Path);
 			vector<string> profile1 = {
 				"LLKYR-K",
 				"Y--ERAK",
@@ -315,7 +316,7 @@ namespace spalternativeUnitTests
 			std::vector<std::optional<std::set<std::string>>> res_2;
 			std::vector<std::optional<std::set<std::string>>> res_3;
 
-			for (size_t col_inx = 0; col_inx < profile1[0].size(); ++col_inx)
+			for (int col_inx = 0; col_inx < profile1[0].size(); ++col_inx)
 			{
 				std::vector<std::string> col = get_column(trans_prof, col_inx);
 

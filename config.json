@@ -1,5 +1,28 @@
 {
-  "input_tree": "tree1.newick",
-  "reference_tree": "tree2.newick",
-  "distance": "rf"
+	"models_list": [
+		{"gap_open_cost":-10, "gap_extend_cost": -0.5, "matrix_file_name": "BLOSUM62"},
+		{"gap_open_cost":-6 , "gap_extend_cost": -0.5, "matrix_file_name": "BLOSUM62"},
+		{"gap_open_cost":-10, "gap_extend_cost": -1,   "matrix_file_name": "BLOSUM62"},
+		{"gap_open_cost":-6 , "gap_extend_cost": -1,   "matrix_file_name": "BLOSUM62"},
+		{"gap_open_cost":-10, "gap_extend_cost": -0.2, "matrix_file_name": "BLOSUM62"},
+		{"gap_open_cost":-6 , "gap_extend_cost": -0.2, "matrix_file_name": "BLOSUM62"},
+		{"gap_open_cost":-10, "gap_extend_cost": -0.5, "matrix_file_name": "PAM250"},
+		{"gap_open_cost":-6 , "gap_extend_cost": -0.5, "matrix_file_name": "PAM250"},
+		{"gap_open_cost":-10, "gap_extend_cost": -1,   "matrix_file_name": "PAM250"},
+		{"gap_open_cost":-6 , "gap_extend_cost": -1,   "matrix_file_name": "PAM250"},
+		{"gap_open_cost":-10, "gap_extend_cost": -0.2, "matrix_file_name": "PAM250"},
+		{"gap_open_cost":-6 , "gap_extend_cost": -0.2, "matrix_file_name": "PAM250"}
+	],
+	"sop_clac_type": "EFFICIENT",
+	"additional_weights": [
+		"HENIKOFF_WG",
+		"HENIKOFF_WOG",
+		"CLUSTAL_MID_ROOT",
+		"CLUSTAL_DIFFERENTIAL_SUM"
+	],
+	"k_values": [5, 10, 20],
+	"stats_output": ["ALL"],
+	"input_files_dir_path": "D:/code/sp_alternative/sp_alternative/example_data/alternative_msas/126014",
+	"output_file_dir_path": "D:/code/sp_alternative/output",
+	"matrix_dir_path": "D:/code/sp_alternative/sp_alternative/input_config_files"
 }

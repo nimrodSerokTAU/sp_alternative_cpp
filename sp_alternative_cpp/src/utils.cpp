@@ -7,8 +7,10 @@
 #include <iostream>
 #include <filesystem>
 
+namespace fs = std::filesystem;
+
 std::pair<std::vector<std::vector<int>>, std::unordered_map<std::string, int>>
-read_matching_matrix(const std::string& file_path) {
+read_matching_matrix(const fs::path& file_path) {
     std::unordered_map<std::string, int> codes_dict_to_inx;
     std::vector<std::vector<int>> match_matrix;
 
@@ -16,7 +18,7 @@ read_matching_matrix(const std::string& file_path) {
     
     if (!infile.is_open()) {
         std::cerr << "Cannot open file: [" << file_path << "]" << std::endl;
-        throw std::runtime_error("Cannot open matrix file: " + file_path);
+        throw std::runtime_error("Cannot open matrix file: " + file_path.string());
     }
 
     std::string line;

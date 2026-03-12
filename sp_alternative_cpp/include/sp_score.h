@@ -5,6 +5,9 @@
 #include <string>
 #include <unordered_map>
 #include <tuple>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 class SPScore {
 public:
@@ -14,7 +17,7 @@ public:
     double ge_cost;
     std::string model_name;
 
-    SPScore(const EvoModel& evo_model, const std::string& matrix_base_path);
+    SPScore(const EvoModel& evo_model, const fs::path& matrix_path);
 
     std::vector<double> compute_naive_sp_score(const std::vector<std::string>& profile,
                                                 const std::vector<std::vector<double>>* seq_w_options = nullptr) const;

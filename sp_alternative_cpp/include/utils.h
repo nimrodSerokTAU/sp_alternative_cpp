@@ -3,9 +3,12 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 std::pair<std::vector<std::vector<int>>, std::unordered_map<std::string, int>>
-read_matching_matrix(const std::string& file_path);
+read_matching_matrix(const fs::path& file_path);
 
 int translate_to_matrix_index(char letter, const std::unordered_map<std::string, int>& code_to_index_dict);
 

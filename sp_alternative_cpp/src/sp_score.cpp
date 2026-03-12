@@ -2,10 +2,13 @@
 #include "utils.h"
 #include <numeric>
 #include <algorithm>
+#include <filesystem>
 
-SPScore::SPScore(const EvoModel& evo_model, const std::string& matrix_base_path) {
-    std::string file_path = matrix_base_path + "/" + evo_model.matrix_file_name + ".txt";
-    auto [wm, cdi] = read_matching_matrix(file_path);
+namespace fs = std::filesystem;
+
+
+SPScore::SPScore(const EvoModel& evo_model, const fs::path& matrix_path) {
+    auto [wm, cdi] = read_matching_matrix(matrix_path);
     w_matrix = wm;
     code_to_index_dict = cdi;
     go_cost = evo_model.go_cost;

@@ -165,6 +165,7 @@
     <ClInclude Include="include\msa_align_by_pattern.h" />
     <ClInclude Include="include\msa_basic_stats.h" />
     <ClInclude Include="include\msa_stats.h" />
+    <ClInclude Include="include\multi_msa_service.h" />
     <ClInclude Include="include\neighbor_joining.h" />
     <ClInclude Include="include\node.h" />
     <ClInclude Include="include\rooted_tree.h" />

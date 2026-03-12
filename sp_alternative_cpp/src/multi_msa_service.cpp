@@ -32,19 +32,21 @@ FileNames get_file_names_ordered(const std::vector<std::string>& file_names) {
     return result;
 }
 
-void multiple_msa_calc_features_and_labels(const Configuration& config,
-                                             const std::string& matrix_base_path) {
+void multiple_msa_calc_features_and_labels(const Configuration& config) {
     auto start = std::chrono::steady_clock::now();
 
-    fs::path project_path = fs::current_path();
-    fs::path comparison_dir = project_path / config.input_files_dir_name;
+    fs::path comparison_dir = config.input_files_dir_path;
 
     std::vector<SPScore> sp_models;
+    sp_models.reserve(config.models.size());
+
     for (const auto& m : config.models) {
-        sp_models.emplace_back(m, matrix_base_path);
+        fs::path matrix_path = fs::path(config.matrix_dir_path) / m.matrix_file_name;
+        matrix_path.replace_extension(".txt");
+        sp_models.emplace_back(m, matrix_path);
     }
 
-    fs::path output_dir_path = project_path / "output";
+    fs::path output_dir_path = config.output_file_dir_path;
     fs::create_directories(output_dir_path);
 
     for (const auto& dir_entry : fs::directory_iterator(comparison_dir)) {
