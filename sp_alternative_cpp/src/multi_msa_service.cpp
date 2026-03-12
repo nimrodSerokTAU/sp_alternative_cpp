@@ -35,7 +35,7 @@ FileNames get_file_names_ordered(const std::vector<std::string>& file_names) {
 void multiple_msa_calc_features_and_labels(const Configuration& config) {
     auto start = std::chrono::steady_clock::now();
 
-    fs::path comparison_dir = config.input_files_dir_path;
+    fs::path comparison_dir(config.input_files_dir_path);
 
     std::vector<SPScore> sp_models;
     sp_models.reserve(config.models.size());

@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 
+using namespace std;
+
 enum class SopCalcTypes {
     NAIVE = 0,
     EFFICIENT = 1
@@ -16,6 +18,13 @@ enum class WeightMethods {
     HENIKOFF_WOG,
     CLUSTAL_MID_ROOT,
     CLUSTAL_DIFFERENTIAL_SUM
+};
+
+unordered_map<string, WeightMethods> str_to_enum_weight_methods = {
+    {"HENIKOFF_WG", WeightMethods::HENIKOFF_WG},
+    {"HENIKOFF_WOG", WeightMethods::HENIKOFF_WOG},
+    {"CLUSTAL_MID_ROOT", WeightMethods::CLUSTAL_MID_ROOT},
+    {"CLUSTAL_DIFFERENTIAL_SUM", WeightMethods::CLUSTAL_DIFFERENTIAL_SUM}
 };
 
 enum class AffineGapMatrixTypes {
@@ -35,6 +44,19 @@ enum class StatsOutput {
     RF_LABEL,
     ALL,
     ALL_FEATURES
+};
+
+unordered_map<string, StatsOutput> str_to_enum_stats_output = {
+    {"SP", StatsOutput::SP},
+    {"GAPS", StatsOutput::GAPS},
+    {"ENTROPY", StatsOutput::ENTROPY},
+    {"TREE", StatsOutput::TREE},
+    {"K_MER", StatsOutput::K_MER},
+    { "W_SP", StatsOutput::W_SP },
+    { "DISTANCE_LABELS", StatsOutput::DISTANCE_LABELS },
+    {"RF_LABEL", StatsOutput::RF_LABEL},
+    {"ALL", StatsOutput::ALL},
+    {"ALL_FEATURES", StatsOutput::ALL_FEATURES}
 };
 
 enum class DistanceType {

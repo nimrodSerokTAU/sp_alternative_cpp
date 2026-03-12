@@ -150,7 +150,6 @@
     <ClCompile Include="src\w_sop_stats.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="config.h" />
     <ClInclude Include="include\config.h" />
     <ClInclude Include="include\distance_calc.h" />
     <ClInclude Include="include\dist_labels_stats.h" />
@@ -175,7 +174,6 @@
     <ClInclude Include="include\unrooted_tree.h" />
     <ClInclude Include="include\utils.h" />
     <ClInclude Include="include\w_sop_stats.h" />
-    <ClInclude Include="src\config.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

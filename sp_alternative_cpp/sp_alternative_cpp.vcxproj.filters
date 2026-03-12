@@ -146,12 +146,6 @@
     <ClInclude Include="include\w_sop_stats.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\multi_msa_service.h">
       <Filter>Header Files</Filter>
     </ClInclude>
