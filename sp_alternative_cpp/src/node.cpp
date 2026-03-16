@@ -31,10 +31,6 @@ void Node::set_a_father(Node* other_node) {
     father = other_node;
 }
 
-void Node::set_branch_length(double bl) {
-    branch_length = bl;
-}
-
 std::string Node::get_keys_rooted_string() const {
     std::vector<std::string> sorted_keys(keys.begin(), keys.end());
     std::sort(sorted_keys.begin(), sorted_keys.end());

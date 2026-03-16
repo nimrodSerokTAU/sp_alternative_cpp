@@ -45,9 +45,9 @@ int main()
     Configuration configuration(
         models,
         static_cast<SopCalcTypes>(x),
-        config["input_files_dir_path"],
-        config["output_file_dir_path"],
-        config["matrix_dir_path"],
+        config["input_files_dir_path"].get<string>(),
+        config["output_file_dir_path"].get<string>(),
+        config["matrix_dir_path"].get<string>(),
         resultWeightMethodsSet,
         k_values,
         resultStatsOutputSet

@@ -7,16 +7,15 @@
 class NeighborJoining {
 public:
     std::vector<std::vector<double>> distance_matrix;
-    std::vector<Node*> nodes;
+    std::vector<Node*> working_nodes;
     std::vector<std::vector<double>> q_matrix;
-    std::vector<Node*> all_nodes;
-    UnrootedTree tree_res;
+    std::vector<std::unique_ptr<Node>> all_nodes;
+    std::optional<UnrootedTree> tree_res;
 
-    // Owns all dynamically created nodes
-    std::vector<std::unique_ptr<Node>> owned_nodes;
-
-    NeighborJoining(const std::vector<std::vector<double>>& distanceMatrix,
-                    const std::vector<Node*>& nodes);
+    NeighborJoining(
+                const std::vector<std::vector<double>>& distanceMatrix,
+                std::vector<std::unique_ptr<Node>> initial_nodes
+            );
 
     std::vector<std::vector<double>> calc_q_matrix() const;
 

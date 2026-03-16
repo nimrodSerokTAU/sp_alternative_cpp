@@ -46,7 +46,7 @@ void multiple_msa_calc_features_and_labels(const Configuration& config) {
         sp_models.emplace_back(m, matrix_path);
     }
 
-    fs::path output_dir_path = config.output_file_dir_path;
+    fs::path output_dir_path = fs::path(config.output_file_dir_path);
     fs::create_directories(output_dir_path);
 
     for (const auto& dir_entry : fs::directory_iterator(comparison_dir)) {

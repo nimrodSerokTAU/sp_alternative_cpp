@@ -57,6 +57,7 @@ void MSA::read_from_fasta(const std::filesystem::path& file_path) {
                 seq.clear();
             }
             seq_name = line.substr(1);
+            seq_name.erase(seq_name.find_last_not_of(" ") + 1);
         } else {
             seq += line;
         }
@@ -89,14 +90,12 @@ void MSA::order_sequences(const std::vector<std::string>& ordered_seq_names) {
 void MSA::build_nj_tree() {
     int n = static_cast<int>(sequences.size());
     std::vector<std::vector<double>> distance_matrix(n, std::vector<double>(n, 0.0));
-    std::vector<Node*> nodes;
-    std::vector<std::unique_ptr<Node>> leaf_storage;
+    std::vector<unique_ptr<Node>>nodes;
 
     for (int i = 0; i < n; i++) {
         auto node = std::make_unique<Node>(i, std::set<std::string>{seq_names[i]}, std::vector<Node*>{}, 0);
         node->fill_newick();
-        nodes.push_back(node.get());
-        leaf_storage.push_back(std::move(node));
+        nodes.push_back(move(node));
         for (int j = i; j < n; j++) {
             double kd = calc_kimura_distance_from_other(sequences[i], sequences[j]);
             distance_matrix[i][j] = kd;
@@ -104,17 +103,10 @@ void MSA::build_nj_tree() {
         }
     }
 
-    NeighborJoining nj(distance_matrix, nodes);
+    NeighborJoining nj(distance_matrix, std::move(nodes));
 
-    // Transfer ownership
-    auto new_tree = std::make_unique<UnrootedTree>(nj.tree_res.anchor, nj.tree_res.all_nodes);
-    for (auto& ptr : leaf_storage) {
-        new_tree->owned_nodes.push_back(std::move(ptr));
-    }
-    for (auto& ptr : nj.owned_nodes) {
-        new_tree->owned_nodes.push_back(std::move(ptr));
-    }
-    tree = std::move(new_tree);
+    // Access the calculated tree (tree_res is std::optional)
+    auto& tree = nj.tree_res.value();
 }
 
 void MSA::set_tree(UnrootedTree&& t) {

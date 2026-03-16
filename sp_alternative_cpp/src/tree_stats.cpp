@@ -54,7 +54,7 @@ std::vector<int> calc_parsimony(const UnrootedTree& unrooted_tree, const std::ve
     // Build nodes_order: all_nodes except last (anchor), sorted by id, plus new_node, new_root
     std::vector<Node*> nodes_order;
     for (int i = 0; i < static_cast<int>(unrooted_tree.all_nodes.size()) - 1; i++) {
-        nodes_order.push_back(unrooted_tree.all_nodes[i]);
+        nodes_order.push_back(unrooted_tree.all_nodes[i].get());
     }
     std::sort(nodes_order.begin(), nodes_order.end(), [](Node* a, Node* b) { return a->id < b->id; });
     nodes_order.push_back(&new_node);

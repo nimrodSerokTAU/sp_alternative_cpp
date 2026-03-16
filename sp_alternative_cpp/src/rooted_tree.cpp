@@ -7,86 +7,92 @@
 #include <tuple>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 
-// Deep copy a vector of nodes preserving parent/child relationships by id
-std::vector<Node*> deep_copy_nodes(const std::vector<Node*>& src,
-                                    std::vector<std::unique_ptr<Node>>& storage) {
-    std::unordered_map<int, Node*> id_map;
-    std::vector<Node*> result;
-
-    // First pass: create copies
-    for (auto* n : src) {
-        auto copy = std::make_unique<Node>(n->id, n->keys, std::vector<Node*>{},
-                                            n->children_bl_sum, n->branch_length);
-        copy->rank_from_root = n->rank_from_root;
-        copy->w_from_root = n->w_from_root;
-        copy->weight = n->weight;
-        copy->parsimony_set = n->parsimony_set;
-        id_map[n->id] = copy.get();
-        result.push_back(copy.get());
-        storage.push_back(std::move(copy));
-    }
-
-    // Second pass: fix relationships
-    for (size_t i = 0; i < src.size(); i++) {
-        for (auto* child : src[i]->children) {
-            auto it = id_map.find(child->id);
-            if (it != id_map.end()) {
-                result[i]->children.push_back(it->second);
-            }
-        }
-        if (src[i]->father) {
-            auto it = id_map.find(src[i]->father->id);
-            if (it != id_map.end()) {
-                result[i]->father = it->second;
-            }
-        }
-    }
-
-    return result;
+RootedTree::RootedTree(Node* r,
+    std::vector<std::unique_ptr<Node>> nodes,
+    const std::set<std::string>& k)
+{
+    root = r;
+    all_nodes = std::move(nodes);
+    keys = k;
 }
 
-RootedTree::RootedTree(Node* root, const std::vector<Node*>& all_nodes,
-                        const std::set<std::string>& keys)
-    : root(root), all_nodes(all_nodes), keys(keys) {}
 
-RootedTree RootedTree::root_tree(const UnrootedTree& unrooted, RootingMethods rooting_method) {
-    std::vector<std::unique_ptr<Node>> storage;
-    std::vector<Node*> all_nodes = deep_copy_nodes(unrooted.all_nodes, storage);
-    std::set<std::string> keys = unrooted.keys;
+RootedTree RootedTree::from_unrooted(const UnrootedTree& ut)
+{
+    std::vector<std::unique_ptr<Node>> new_nodes;
+    new_nodes.reserve(ut.all_nodes.size());
 
-    RootingPoint rooting_point;
-    if (rooting_method == RootingMethods::LONGEST_PATH_MID) {
-        // Need to use the copy for midpoint calculation
-        // Create a temporary unrooted tree from copied nodes
-        // Find the anchor equivalent in copied nodes
-        Node* copied_anchor = nullptr;
-        for (auto* n : all_nodes) {
-            if (n->id == unrooted.anchor->id) {
-                copied_anchor = n;
-                break;
-            }
-        }
-        UnrootedTree temp_tree(copied_anchor, all_nodes);
-        rooting_point = calc_mid_point(temp_tree);
-    } else {
-        Node* copied_anchor = nullptr;
-        for (auto* n : all_nodes) {
-            if (n->id == unrooted.anchor->id) {
-                copied_anchor = n;
-                break;
-            }
-        }
-        UnrootedTree temp_tree(copied_anchor, all_nodes);
-        auto rooting_points = calc_min_differential_sum(temp_tree, all_nodes);
-        rooting_point = find_shallowest_tree(all_nodes, rooting_points);
+    std::unordered_map<int, Node*> id_map;
+
+    // copy nodes
+    for (const auto& n : ut.all_nodes) {
+        new_nodes.push_back(std::make_unique<Node>(*n));
+        id_map[n->id] = new_nodes.back().get();
     }
 
-    auto [new_root, updated_nodes] = create_root(all_nodes, rooting_point, storage);
+    // fix pointers
+    for (size_t i = 0; i < ut.all_nodes.size(); ++i) {
+        Node* orig = ut.all_nodes[i].get();
+        Node* copy = new_nodes[i].get();
 
-    RootedTree tree(new_root, updated_nodes, keys);
-    tree.owned_nodes = std::move(storage);
-    return tree;
+        copy->children.clear();
+        for (Node* c : orig->children)
+            copy->children.push_back(id_map[c->id]);
+
+        copy->father = orig->father ? id_map[orig->father->id] : nullptr;
+    }
+
+    Node* new_root = id_map[ut.anchor->id];
+    return RootedTree(new_root, std::move(new_nodes), ut.keys);
+}
+
+RootedTree RootedTree::root_tree(const UnrootedTree& unrooted, RootingMethods rooting_method) {
+    RootingPoint rp;
+    // Find midpoint rooting location
+    if (rooting_method == RootingMethods::LONGEST_PATH_MID) {
+        rp = calc_mid_point(unrooted);
+    }
+    else {
+        auto rooting_points = calc_min_differential_sum(unrooted);
+        rp = find_shallowest_tree(unrooted, rooting_points);
+    }
+
+    // Clone unrooted tree nodes
+    RootedTree rooted = RootedTree::from_unrooted(unrooted);
+
+    Node* start = rooted.all_nodes[rp.start_id].get();
+    Node* end = rooted.all_nodes[rp.end_id].get();
+
+    // Create new root node
+    std::set<std::string> root_keys = start->keys;
+    root_keys.insert(end->keys.begin(), end->keys.end());
+
+    auto new_root_ptr = std::make_unique<Node>(
+        static_cast<int>(rooted.all_nodes.size()),
+        root_keys,
+        std::vector<Node*>{start, end},
+        start->children_bl_sum + end->children_bl_sum,
+        0.0
+    );
+
+    Node* new_root = new_root_ptr.get();
+
+    // Adjust branch lengths
+    start->branch_length = rp.dist_from_start;
+    end->branch_length = rp.dist_from_end;
+
+    start->father = new_root;
+    end->father = new_root;
+
+    // Store new node
+    rooted.all_nodes.push_back(std::move(new_root_ptr));
+
+    // Set root pointer
+    rooted.root = new_root;
+
+    return rooted;
 }
 
 void RootedTree::calc_clustal_w() {
@@ -101,7 +107,7 @@ void RootedTree::calc_clustal_w() {
 
 void RootedTree::calc_seq_w() {
     calc_clustal_w();
-    for (auto* node : all_nodes) {
+    for (const auto& node : all_nodes) {
         if (node->children.empty()) {
             seq_weight_dict[*node->keys.begin()] = node->weight;
         }
@@ -176,8 +182,17 @@ RootingPoint calc_potential_root_on_branch(double bl, double w_to_orig, double w
     return {origin, dest, dist_from_start, bl - dist_from_start, 0};
 }
 
-std::vector<RootingPoint> calc_min_differential_sum(const UnrootedTree& unrooted,
-                                                      std::vector<Node*>& all_nodes) {
+std::vector<RootingPoint> calc_min_differential_sum(const UnrootedTree& unrooted) {
+    
+    std::vector<Node*> node_ptrs;
+    node_ptrs.reserve(unrooted.all_nodes.size());
+
+    for (const auto& n : unrooted.all_nodes)
+    {
+        node_ptrs.push_back(n.get());
+    }
+
+    
     struct BranchInfo {
         int origin, dest;
         double bl, w_to_orig, w_to_dest, delta;
@@ -189,14 +204,14 @@ std::vector<RootingPoint> calc_min_differential_sum(const UnrootedTree& unrooted
 
     std::map<std::string, BranchInfo> all_branches;
 
-    for (auto* node : all_nodes) {
+    for (const auto& node : unrooted.all_nodes) {
         for (const auto& adj : node->get_adj()) {
             int min_id = std::min(adj.node_id, node->id);
             int max_id = std::max(adj.node_id, node->id);
             std::string key = "o:" + std::to_string(min_id) + "-d:" + std::to_string(max_id);
 
             if (all_branches.find(key) == all_branches.end()) {
-                double w_to_orig_val = sum_bl_up_to_node_id(all_nodes[min_id], max_id, all_nodes);
+                double w_to_orig_val = sum_bl_up_to_node_id(node_ptrs[min_id], max_id, node_ptrs);
                 double w_to_dest_val = total_branch_length - w_to_orig_val - adj.dist;
                 double delta_val = adj.dist - std::abs(w_to_dest_val - w_to_orig_val);
 
@@ -325,76 +340,72 @@ std::pair<Node*, std::vector<Node*>> create_root(std::vector<Node*>& all_nodes,
     return {new_root, all_nodes};
 }
 
-RootingPoint find_shallowest_tree(std::vector<Node*>& all_nodes,
-                                   std::vector<RootingPoint>& rooting_points) {
-    if (rooting_points.size() == 1) {
-        return rooting_points[0];
+RootingPoint RootedTree::find_shallowest_tree(
+    const UnrootedTree& ut,
+    const std::vector<RootingPoint>& rooting_points)
+{
+    RootingPoint best = rooting_points[0];
+    double best_depth = std::numeric_limits<double>::max();
+
+    for (const auto& rp : rooting_points)
+    {
+        Node* start = ut.all_nodes[rp.start_id].get();
+        Node* end = ut.all_nodes[rp.end_id].get();
+
+        double depth = longest_dist_from_virtual_root(
+            ut,
+            start,
+            end,
+            rp.dist_from_start,
+            rp.dist_from_end);
+
+        if (depth < best_depth)
+        {
+            best_depth = depth;
+            best = rp;
+            best.longest_dist = depth;
+        }
     }
 
-    for (auto& rp : rooting_points) {
-        std::vector<std::unique_ptr<Node>> temp_storage;
-        auto my_nodes = deep_copy_nodes(all_nodes, temp_storage);
+    return best;
+}
 
-        // Add a node between
-        int start_id = rp.start_id;
-        int end_id = rp.end_id;
+double longest_dist_from_virtual_root(
+    const UnrootedTree& tree,
+    Node* start,
+    Node* end,
+    double d_start,
+    double d_end)
+{
+    std::deque<std::pair<Node*, double>> q;
+    std::unordered_set<int> visited;
 
-        bool start_father_is_end = (my_nodes[start_id]->father &&
-                                     my_nodes[start_id]->father->id == end_id);
+    double max_dist = 0.0;
 
-        Node *child, *parent;
-        double dist_child, dist_parent;
-        if (start_father_is_end) {
-            child = my_nodes[start_id];
-            parent = my_nodes[end_id];
-            dist_child = rp.dist_from_start;
-            dist_parent = rp.dist_from_end;
-        } else {
-            child = my_nodes[end_id];
-            parent = my_nodes[start_id];
-            dist_child = rp.dist_from_end;
-            dist_parent = rp.dist_from_start;
+    q.push_back({ start, d_start });
+    q.push_back({ end,   d_end });
+
+    visited.insert(start->id);
+    visited.insert(end->id);
+
+    while (!q.empty())
+    {
+        auto [node, dist] = q.front();
+        q.pop_front();
+
+        max_dist = std::max(max_dist, dist);
+
+        for (const auto& adj : node->get_adj())
+        {
+            if (visited.count(adj.node_id))
+                continue;
+
+            Node* next = tree.all_nodes[adj.node_id].get();
+
+            visited.insert(adj.node_id);
+            q.push_back({ next, dist + adj.dist });
         }
-
-        // Create new node between child and parent
-        std::set<std::string> new_keys = child->keys;
-        std::vector<Node*> child_vec = {child};
-        auto* new_node = new Node(static_cast<int>(my_nodes.size()),
-                                   new_keys, child_vec, 0);
-        temp_storage.emplace_back(new_node);
-        new_node->set_a_father(parent);
-        new_node->set_branch_length(dist_parent);
-
-        // Update parent's children
-        std::vector<Node*> new_parent_children;
-        for (auto* c : parent->children) {
-            if (c->id != child->id) new_parent_children.push_back(c);
-        }
-        new_parent_children.push_back(new_node);
-        parent->children = new_parent_children;
-
-        child->set_a_father(new_node);
-        child->set_branch_length(dist_child);
-        my_nodes.push_back(new_node);
-
-        // Create a sentinel node for root measurement
-        std::set<std::string> empty_keys;
-        std::vector<Node*> empty_children;
-        auto* sentinel = new Node(static_cast<int>(my_nodes.size()),
-                                   empty_keys, empty_children, 0);
-        temp_storage.emplace_back(sentinel);
-        my_nodes.push_back(sentinel);
-
-        // Find anchor equivalent
-        Node* anchor = my_nodes.size() >= 3 ? my_nodes[my_nodes.size() - 3] : my_nodes[0];
-        UnrootedTree temp_tree(anchor, my_nodes);
-        rp.longest_dist = temp_tree.get_longest_dist_to(my_nodes[my_nodes.size() - 2]);
     }
 
-    std::sort(rooting_points.begin(), rooting_points.end(),
-              [](const RootingPoint& a, const RootingPoint& b) {
-                  return a.longest_dist < b.longest_dist;
-              });
-
-    return rooting_points[0];
+    return max_dist;
 }

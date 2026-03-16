@@ -3,13 +3,32 @@
 #include <numeric>
 #include <algorithm>
 
-NeighborJoining::NeighborJoining(const std::vector<std::vector<double>>& distanceMatrix,
-                                  const std::vector<Node*>& initial_nodes)
-    : distance_matrix(distanceMatrix), nodes(initial_nodes), all_nodes(initial_nodes),
-      tree_res(build_tree()) {}
+using namespace std;
+
+NeighborJoining::NeighborJoining(
+    const std::vector<std::vector<double>>& distanceMatrix,
+    std::vector<std::unique_ptr<Node>> initial_nodes)
+{
+    distance_matrix = distanceMatrix;
+
+    // move ownership of nodes
+    all_nodes = std::move(initial_nodes);
+
+    // build working_nodes from the owned nodes
+    working_nodes.reserve(all_nodes.size());
+    for (auto& node : all_nodes) {
+        working_nodes.push_back(node.get());
+    }
+
+    // initialize q_matrix size
+    q_matrix.resize(distance_matrix.size(),
+        std::vector<double>(distance_matrix.size(), 0.0));
+
+    tree_res = build_tree();
+}
 
 std::vector<std::vector<double>> NeighborJoining::calc_q_matrix() const {
-    int n = static_cast<int>(nodes.size());
+    int n = static_cast<int>(working_nodes.size());
     std::vector<std::vector<double>> qm(distance_matrix.size() - 1, std::vector<double>(n, 0.0));
 
     for (int i = 0; i < static_cast<int>(distance_matrix.size()) - 1; i++) {
@@ -39,7 +58,7 @@ NeighborJoining::ClosestPair NeighborJoining::find_closest_pair() const {
 }
 
 std::pair<double, double> NeighborJoining::find_delta(int f_inx, int s_inx) const {
-    int n = static_cast<int>(nodes.size());
+    int n = static_cast<int>(working_nodes.size());
     double sum_f = std::accumulate(distance_matrix[f_inx].begin(), distance_matrix[f_inx].end(), 0.0);
     double sum_s = std::accumulate(distance_matrix[s_inx].begin(), distance_matrix[s_inx].end(), 0.0);
 
@@ -78,27 +97,28 @@ void NeighborJoining::merge_two_clusters() {
 
     distance_matrix = matrix;
 
-    nodes[f_inx]->set_branch_length(delta_f);
-    nodes[s_inx]->set_branch_length(delta_s);
+    working_nodes[f_inx]->set_branch_length(delta_f);
+    working_nodes[s_inx]->set_branch_length(delta_s);
 
     // Create new node
+    set<string> keysOfNewNode = working_nodes[f_inx]->keys;
+    keysOfNewNode.insert(working_nodes[s_inx]->keys.begin(), working_nodes[s_inx]->keys.end());
+	double children_bl_sum = delta_f + delta_s;
+
     auto new_node = std::make_unique<Node>(static_cast<int>(all_nodes.size()),
-                                            std::set<std::string>{}, // will be filled by create_from_children logic
-                                            std::vector<Node*>{nodes[f_inx], nodes[s_inx]}, 0);
-    // Fill keys and bl_sum from children
-    for (auto* child : new_node->children) {
-        new_node->keys.insert(child->keys.begin(), child->keys.end());
-        new_node->children_bl_sum += child->children_bl_sum + child->branch_length;
-    }
+                                            keysOfNewNode,
+                                            std::vector<Node*>{working_nodes[f_inx], working_nodes[s_inx]},
+                                            children_bl_sum,
+                                            0);
 
-    nodes[f_inx]->set_a_father(new_node.get());
-    nodes[s_inx]->set_a_father(new_node.get());
+    Node* new_node_ptr = new_node.get();
+    all_nodes.push_back(std::move(new_node));
+    working_nodes[f_inx]->set_a_father(new_node_ptr);
+    working_nodes[s_inx]->set_a_father(new_node_ptr);
 
-    all_nodes.push_back(new_node.get());
-    nodes[f_inx] = new_node.get();
-    nodes.erase(nodes.begin() + s_inx);
-
-    owned_nodes.push_back(std::move(new_node));
+    
+    working_nodes[f_inx] = new_node_ptr;
+    working_nodes.erase(working_nodes.begin() + s_inx);
 }
 
 Node* NeighborJoining::merge_last_three() {
@@ -107,33 +127,30 @@ Node* NeighborJoining::merge_last_three() {
     double deltas[3] = {delta_f, delta_s, delta_t};
 
     for (int i = 0; i < 3; i++) {
-        nodes[i]->set_branch_length(deltas[i]);
+        working_nodes[i]->set_branch_length(deltas[i]);
     }
 
     auto new_node = std::make_unique<Node>(static_cast<int>(all_nodes.size()),
                                             std::set<std::string>{},
-                                            std::vector<Node*>{nodes[0], nodes[1], nodes[2]}, 0);
+                                            std::vector<Node*>{working_nodes[0], working_nodes[1], working_nodes[2]}, 0);
     for (auto* child : new_node->children) {
         new_node->keys.insert(child->keys.begin(), child->keys.end());
         new_node->children_bl_sum += child->children_bl_sum + child->branch_length;
     }
 
     for (int i = 0; i < 3; i++) {
-        nodes[i]->set_a_father(new_node.get());
+        working_nodes[i]->set_a_father(new_node.get());
     }
-
-    Node* result = new_node.get();
-    all_nodes.push_back(result);
-    owned_nodes.push_back(std::move(new_node));
-    return result;
+    all_nodes.push_back(std::move(new_node));
+    return new_node.get();
 }
 
 UnrootedTree NeighborJoining::build_tree() {
-    while (nodes.size() > 3) {
+    while (working_nodes.size() > 3) {
         q_matrix = calc_q_matrix();
         merge_two_clusters();
     }
     q_matrix = calc_q_matrix();
     Node* root = merge_last_three();
-    return UnrootedTree(root, all_nodes);
+    return UnrootedTree(root, std::move(all_nodes));
 }

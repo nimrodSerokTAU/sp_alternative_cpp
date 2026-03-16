@@ -30,10 +30,12 @@ public:
 
     static Node* create_from_children(const std::vector<Node*>& children_list, int inx,
                                       std::vector<Node*>& storage);
+    // Clone the node without children/father pointers
+   
 
     void add_child_to_me(Node* child_node);
     void set_a_father(Node* other_node);
-    void set_branch_length(double bl);
+    void set_branch_length(double bl) { branch_length = bl; };
     std::string get_keys_rooted_string() const;
     std::string get_keys_unrooted_string(const std::set<std::string>& tree_keys,
                                           const std::string& differentiator_key) const;

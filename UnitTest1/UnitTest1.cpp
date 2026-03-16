@@ -8,6 +8,13 @@
 #include "../sp_alternative_cpp/include/distance_calc.h"
 #include "../sp_alternative_cpp/include/node.h"
 #include "../sp_alternative_cpp/include/unrooted_tree.h"
+#include "../sp_alternative_cpp/include/neighbor_joining.h"
+#include "pch.h"                  
+#include <memory>
+#include <set>
+#include <vector>
+#include <algorithm>
+#include <cmath>
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std;
 
@@ -648,7 +655,7 @@ namespace spalternativeUnitTests
 
 		TEST_METHOD(tree_from_newick)
 		{
-			std::pair<Node*, std::vector<Node*>> res = create_a_tree_from_newick(newick_of_AATF);
+			std::pair<Node*, std::vector<std::unique_ptr<Node>>> res = create_a_tree_from_newick(newick_of_AATF);
 			std::unordered_map<int, std::set<std::string>> expextedTaxaDict;
 			std::unordered_map<int, std::vector<int>> expextedChildrenIdsDict;
 
@@ -832,5 +839,59 @@ namespace spalternativeUnitTests
 			Assert::AreEqual(res, 0.333, 0.001);
 		}
 
+		TEST_METHOD(neighbor_joining)
+		{
+			// Distance matrix
+			vector<vector<double>> matrix_case_nj = {
+				{0.0, 5.0, 9.0, 9.0, 8.0},
+				{5.0, 0.0, 10.0, 10.0, 9.0},
+				{9.0, 10.0, 0.0, 8.0, 7.0},
+				{9.0, 10.0, 8.0, 0.0, 3.0},
+				{8.0, 9.0, 7.0, 3.0, 0.0},
+			};
+
+			// Keys for leaves
+			vector<string> keys_case_nj = { "a", "b", "c", "d", "e" };
+
+			// Create nodes as unique_ptr<Node>
+			vector<unique_ptr<Node>> nodesP;
+			for (size_t i = 0; i < keys_case_nj.size(); ++i)
+			{
+				set<string> thisKeySet = { keys_case_nj[i] };
+				vector<Node*> children = {}; // leaf node
+				auto new_node = make_unique<Node>(
+					static_cast<int>(i),     // id
+					thisKeySet,              // keys
+					children,                // children
+					1.0,                     // children_bl_sum
+					0.0                      // branch_length
+				);
+
+				nodesP.push_back(std::move(new_node)); // MOVE is required!
+			}
+
+			// Create NeighborJoining instance (constructor moves nodesP into all_nodes)
+			NeighborJoining neighborJoining(matrix_case_nj, std::move(nodesP));
+
+			// Access the calculated tree (tree_res is std::optional)
+			auto& tree = neighborJoining.tree_res.value();
+
+			// Get branch lengths and sort
+			vector<double> bl_list = tree.get_branches_lengths_list();
+			sort(bl_list.begin(), bl_list.end());
+
+			// Expected branch lengths
+			vector<double> expected_bl_list = { 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 4.0 };
+
+			// Check sizes
+			Assert::AreEqual(expected_bl_list.size(), bl_list.size());
+
+			// Compare each branch length (allow small epsilon for floating-point)
+			const double EPS = 1e-6;
+			for (size_t i = 0; i < bl_list.size(); ++i)
+			{
+				Assert::IsTrue(fabs(expected_bl_list[i] - bl_list[i]) < EPS);
+			}
+		}
 	};
 }

@@ -18,7 +18,7 @@ struct Configuration {
     Configuration(const std::vector<EvoModel>& models_list,
                   SopCalcTypes sop_calc_type = SopCalcTypes::EFFICIENT,
                   const std::string& input_files_dir_path = "",
-                  const std::string& output_files_dir_path = "",
+                  const std::string& output_file_dir_path = "",
                   const std::string& matrix_dir_path = "",
                   const std::set<WeightMethods>& additional_weights = {},
                   const std::set<int>& k_values = {},
