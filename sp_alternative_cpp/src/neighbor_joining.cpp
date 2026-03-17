@@ -130,19 +130,25 @@ Node* NeighborJoining::merge_last_three() {
         working_nodes[i]->set_branch_length(deltas[i]);
     }
 
-    auto new_node = std::make_unique<Node>(static_cast<int>(all_nodes.size()),
-                                            std::set<std::string>{},
-                                            std::vector<Node*>{working_nodes[0], working_nodes[1], working_nodes[2]}, 0);
-    for (auto* child : new_node->children) {
-        new_node->keys.insert(child->keys.begin(), child->keys.end());
-        new_node->children_bl_sum += child->children_bl_sum + child->branch_length;
+    double children_bl_sum = 0;
+    std::set<std::string>keys;
+    for (int i = 0; i < 3; i++) {
+        Node* child = working_nodes[i];
+        keys.insert(child->keys.begin(), child->keys.end());
+        children_bl_sum += child->children_bl_sum + child->branch_length;
     }
+    auto new_node = std::make_unique<Node>(static_cast<int>(all_nodes.size()),
+        keys,
+        std::vector<Node*>{working_nodes[0], working_nodes[1], working_nodes[2]}, children_bl_sum);
+    
+    all_nodes.push_back(std::move(new_node));
+
+    Node* new_node_ptr = all_nodes.back().get();
 
     for (int i = 0; i < 3; i++) {
-        working_nodes[i]->set_a_father(new_node.get());
+        working_nodes[i]->set_a_father(new_node_ptr);
     }
-    all_nodes.push_back(std::move(new_node));
-    return new_node.get();
+    return new_node_ptr;
 }
 
 UnrootedTree NeighborJoining::build_tree() {
