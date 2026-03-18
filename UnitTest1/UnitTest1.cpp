@@ -15,6 +15,7 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include "../sp_alternative_cpp/include/tree_stats.h"
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std;
 
@@ -891,6 +892,92 @@ namespace spalternativeUnitTests
 			for (size_t i = 0; i < bl_list.size(); ++i)
 			{
 				Assert::IsTrue(fabs(expected_bl_list[i] - bl_list[i]) < EPS);
+			}
+		}
+
+		TEST_METHOD(parsimony)
+		{
+			vector<unique_ptr<Node>> all_nodes;
+
+			auto n_a = make_unique<Node>(0, set<string>{"a"}, vector<Node*>{}, 0);
+			auto n_b = make_unique<Node>(1, set<string>{"b"}, vector<Node*>{}, 0);
+			auto n_c = make_unique<Node>(2, set<string>{"c"}, vector<Node*>{}, 0);
+			auto n_d = make_unique<Node>(3, set<string>{"d"}, vector<Node*>{}, 0);
+			auto n_e = make_unique<Node>(4, set<string>{"e"}, vector<Node*>{}, 0);
+
+			// Keep raw pointers
+			Node* p_a = n_a.get();
+			Node* p_b = n_b.get();
+			Node* p_c = n_c.get();
+			Node* p_d = n_d.get();
+			Node* p_e = n_e.get();
+
+			all_nodes.push_back(std::move(n_a));
+			all_nodes.push_back(std::move(n_b));
+			all_nodes.push_back(std::move(n_c));
+			all_nodes.push_back(std::move(n_d));
+			all_nodes.push_back(std::move(n_e));
+
+			// --- 2. Internal nodes ---
+
+			// n_a_b
+			auto n_a_b = make_unique<Node>(5, set<string>{}, vector<Node*>{p_a, p_b}, 0);
+			Node* p_a_b = n_a_b.get();
+			p_a->set_a_father(p_a_b);
+			p_b->set_a_father(p_a_b);
+			p_a_b->keys.insert(p_a->keys.begin(), p_a->keys.end());
+			p_a_b->keys.insert(p_b->keys.begin(), p_b->keys.end());
+
+			all_nodes.push_back(std::move(n_a_b));
+
+			// n_a_b_c
+			auto n_a_b_c = make_unique<Node>(6, set<string>{}, vector<Node*>{p_a_b, p_c}, 0);
+			Node* p_a_b_c = n_a_b_c.get();
+			p_a_b->set_a_father(p_a_b_c);
+			p_c->set_a_father(p_a_b_c);
+			p_a_b_c->keys.insert(p_a_b->keys.begin(), p_a_b->keys.end());
+			p_a_b_c->keys.insert(p_c->keys.begin(), p_c->keys.end());
+
+			all_nodes.push_back(std::move(n_a_b_c));
+
+			// anchor
+			auto anchor_node = make_unique<Node>(7, set<string>{}, vector<Node*>{p_a_b_c, p_d, p_e}, 0);
+			Node* anchor = anchor_node.get();
+
+			p_a_b_c->set_a_father(anchor);
+			p_d->set_a_father(anchor);
+			p_e->set_a_father(anchor);
+
+			for (auto* c : anchor->children) {
+				anchor->keys.insert(c->keys.begin(), c->keys.end());
+			}
+
+			all_nodes.push_back(std::move(anchor_node));
+
+			// --- 3. Alignment ---
+			vector<string> aln = {
+				"AYCDDDW",
+				"AVVDDDW",
+				"AYCDDDW",
+				"AVVDDDW",
+				"APVDDDW"
+			};
+
+			vector<string> names = { "a", "b", "c", "d", "e" };
+
+			// --- 4. Build tree ---
+			UnrootedTree tree(anchor, std::move(all_nodes));
+
+			// --- 5. Run parsimony ---
+			vector<int> res = calc_parsimony(tree, aln, names);
+
+			// --- 6. Expected result ---
+			vector<int> expected = { 0, 3, 2, 0, 0, 0, 0 };
+
+			// --- 7. Assert ---
+			Assert::AreEqual(res.size(), expected.size());
+			for (size_t i = 0; i < res.size(); i++) {
+				Assert::AreEqual(res[i], expected[i]);
 			}
 		}
 	};

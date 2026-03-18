@@ -2,12 +2,19 @@
 #include <sstream>
 #include <algorithm>
 
-Node::Node(int node_id, const std::set<std::string>& keys, const std::vector<Node*>& children,
-           double children_bl_sum, double branch_length)
-    : id(node_id), keys(keys), father(nullptr), branch_length(branch_length),
-      children(children), children_bl_sum(children_bl_sum),
-      bl_sum_on_differentiator(0), bl_sum_on_non_differentiator(0),
-      rank_from_root(-1), weight(0) {}
+Node::Node(int _id,
+    const std::set<std::string>& _keys,
+    const std::vector<Node*>& _children,
+    double _children_bl_sum,
+    double _branch_length)
+    : id(_id),
+    keys(_keys),
+    children(_children),
+    children_bl_sum(_children_bl_sum),
+    branch_length(_branch_length),
+    father(nullptr)
+{
+}
 
 Node* Node::create_from_children(const std::vector<Node*>& children_list, int inx,
                                   std::vector<Node*>& storage) {
