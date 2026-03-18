@@ -28,6 +28,10 @@ public:
     Node(int node_id, const std::set<std::string>& keys, const std::vector<Node*>& children,
          double children_bl_sum, double branch_length = 0.0);
 
+    Node(int _id)
+        : id(_id), children_bl_sum(0.0), branch_length(0.0), father(nullptr) {
+    }
+
     static Node* create_from_children(const std::vector<Node*>& children_list, int inx,
                                       std::vector<Node*>& storage);
     // Clone the node without children/father pointers

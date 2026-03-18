@@ -35,94 +35,6 @@ void TreeStats::set_tree_stats(const std::vector<double>& bl_list, const Unroote
     parsimony_75_pct = calc_percentile(pars_double, 75);
 }
 
-std::vector<int> calc_parsimony(const UnrootedTree& unrooted_tree,
-    const std::vector<std::string>& aln,
-    const std::vector<std::string>& names) {
-    std::unordered_map<Node*, Node*> old_to_new;
-    std::vector<std::unique_ptr<Node>> temp_nodes;
-    temp_nodes.reserve(unrooted_tree.all_nodes.size());
-
-    // Step 1: copy nodes
-    for (auto& n : unrooted_tree.all_nodes) {
-        auto copy = std::make_unique<Node>(n->id, n->keys, std::vector<Node*>{}, n->children_bl_sum, n->branch_length);
-        old_to_new[n.get()] = copy.get();
-        temp_nodes.push_back(std::move(copy));
-    }
-
-    // Step 2: fix children pointers
-    for (auto& n : unrooted_tree.all_nodes) {
-        Node* n_copy = old_to_new[n.get()];
-        for (Node* c : n->children) {
-            n_copy->children.push_back(old_to_new[c]);
-        }
-        if (n->father) n_copy->father = old_to_new[n->father];
-    }
-
-    // Step 3: get copied anchor
-    Node* anchor_copy = old_to_new[unrooted_tree.anchor];
-
-    // 3. If root has >2 children, create temporary binary root
-    Node* temp_root = nullptr;
-    if (anchor_copy->children.size() > 2) {
-        auto new_node = std::make_unique<Node>(
-            -1, std::set<std::string>{}, std::vector<Node*>{anchor_copy->children[0], anchor_copy->children[1]}, 0.0, 0.0);
-
-        anchor_copy->children.erase(anchor_copy->children.begin(), anchor_copy->children.begin() + 2);
-        anchor_copy->children.push_back(new_node.get());
-        new_node->father = nullptr; // temporary root
-        temp_nodes.push_back(std::move(new_node));
-        temp_root = temp_nodes.back().get();
-    }
-    else {
-        temp_root = anchor_copy;
-    }
-
-    // 4. Post-order traversal
-    std::vector<Node*> postorder;
-    std::function<void(Node*)> dfs = [&](Node* n) {
-        for (Node* c : n->children) dfs(c);
-        postorder.push_back(n);
-        };
-    dfs(temp_root);
-
-    // 5. Map sequence names to indices
-    std::unordered_map<std::string, int> seq_name_to_index;
-    for (int i = 0; i < static_cast<int>(names.size()); i++)
-        seq_name_to_index[names[i]] = i;
-
-    // 6. Fitch algorithm
-    std::vector<int> parsimony_per_col;
-    int ncol = static_cast<int>(aln[0].size());
-    for (int col = 0; col < ncol; col++) {
-        std::unordered_map<Node*, std::set<char>> states;
-        int score = 0;
-        for (Node* node : postorder) {
-            if (node->children.empty()) {
-                char c = aln[seq_name_to_index[*node->keys.begin()]][col];
-                states[node] = { c };
-            }
-            else {
-                std::set<char> inter, uni;
-                bool first = true;
-                for (Node* c : node->children) {
-                    if (first) { inter = states[c]; uni = states[c]; first = false; }
-                    else {
-                        std::set<char> temp;
-                        std::set_intersection(inter.begin(), inter.end(),
-                            states[c].begin(), states[c].end(),
-                            std::inserter(temp, temp.begin()));
-                        inter = temp;
-                        uni.insert(states[c].begin(), states[c].end());
-                    }
-                }
-                if (!inter.empty()) states[node] = inter;
-                else { states[node] = uni; score++; }
-            }
-        }
-        parsimony_per_col.push_back(score);
-    }
-    return parsimony_per_col;
-}
 
 std::vector<StatValue> TreeStats::get_my_features_as_list() const {
     return {
@@ -132,4 +44,116 @@ std::vector<StatValue> TreeStats::get_my_features_as_list() const {
         StatValue(parsimony_mean), StatValue(parsimony_sum), StatValue(parsimony_max), StatValue(parsimony_min),
         StatValue(parsimony_25_pct), StatValue(parsimony_75_pct)
     };
+}
+
+std::set<char> intersect_sets(const std::set<char>& a, const std::set<char>& b) {
+    std::set<char> result;
+
+    std::set_intersection(
+        a.begin(), a.end(),
+        b.begin(), b.end(),
+        std::inserter(result, result.begin())
+    );
+
+    return result;
+}
+
+
+std::vector<int> calc_parsimony(const UnrootedTree& unrooted_tree,
+    const std::vector<std::string>& aln,
+    const std::vector<std::string>& names) {
+    // --- 1. Deep-copy all nodes including anchor ---
+    std::unordered_map<Node*, Node*> old_to_new;
+    std::vector<std::unique_ptr<Node>> temp_nodes;
+
+    // --- 2. Prepare postorder traversal ---
+    std::vector<Node*> postorder;
+    std::function<void(Node*)> dfs = [&](Node* node) {
+        for (Node* c : node->children) {
+            if (c != node->father) dfs(c);
+        }
+        postorder.push_back(node);
+        };
+    dfs(unrooted_tree.anchor);
+
+    // --- 3. Map sequence names to alignment indices ---
+    std::unordered_map<std::string, int> seq_name_to_index;
+    for (int i = 0; i < static_cast<int>(names.size()); i++) {
+        seq_name_to_index[names[i]] = i;
+    }
+
+    // --- 4. Fitch parsimony per column ---
+    std::vector<int> parsimony_per_col;
+    int n_cols = static_cast<int>(aln[0].size());
+    for (int col = 0; col < n_cols; col++) {
+        std::unordered_map<Node*, std::set<char>> states;
+        int score = 0;
+
+        for (Node* node : postorder) {
+            if (node->children.empty()) {
+                // leaf
+
+                char c = aln[seq_name_to_index[*node->keys.begin()]][col];
+                states[node] = { c };
+            }
+            else if (node->children.size() == 2) {
+                std::set<char> intersection, uni;
+                bool first = true;
+                for (Node* child : node->children) {
+                    if (child == node->father) continue;
+                    if (first) {
+                        intersection = states[child];
+                        uni = states[child];
+                        first = false;
+                    }
+                    else {
+                        std::set<char> tmp;
+                        std::set_intersection(intersection.begin(), intersection.end(),
+                            states[child].begin(), states[child].end(),
+                            std::inserter(tmp, tmp.begin()));
+                        intersection = tmp;
+                        uni.insert(states[child].begin(), states[child].end());
+                    }
+                }
+                if (!intersection.empty()) states[node] = intersection;
+                else {
+                    states[node] = uni;
+                    score++;
+                }
+            }
+            else { // this is the 3-way root:
+                std::set<char> intersection, uni;
+                bool first = true;
+                Node* first_child = unrooted_tree.anchor->children[0];
+                Node* second_child = unrooted_tree.anchor->children[1];
+                Node* third_child = unrooted_tree.anchor->children[2];
+
+                std::set<char> state_a = states[first_child];
+                std::set<char> state_b = states[second_child];
+                std::set<char> state_c = states[third_child];
+                std::set<char> state_a_b;
+
+				std::set<char> intersection_a = intersect_sets(state_a, state_b);
+                if (intersection_a.size() == 0) {
+                    uni.insert(state_a.begin(), state_a.end());
+                    uni.insert(state_b.begin(), state_b.end());
+                    state_a_b = uni;
+                    score++;
+                }
+                else {
+                    state_a_b = intersection_a;
+                }
+                std::set<char> intersection_b = intersect_sets(state_a_b, state_c);
+                if (intersection_b.size() == 0) {
+                    uni.insert(state_a_b.begin(), state_a_b.end());
+                    uni.insert(state_c.begin(), state_c.end());
+                    score++;
+                }
+            }
+        }
+
+        parsimony_per_col.push_back(score);
+    }
+
+    return parsimony_per_col;
 }
