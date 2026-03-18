@@ -70,11 +70,14 @@ std::vector<int> calc_parsimony(const UnrootedTree& unrooted_tree,
     std::vector<Node*> postorder;
     std::function<void(Node*)> dfs = [&](Node* node) {
         for (Node* c : node->children) {
-            if (c != node->father) dfs(c);
-        }
-        postorder.push_back(node);
-        };
+            if (c->children.size() > 0) {
+                dfs(c);
+            }
+            postorder.push_back(c);
+        }   
+    };
     dfs(unrooted_tree.anchor);
+    postorder.push_back(unrooted_tree.anchor);
 
     // --- 3. Map sequence names to alignment indices ---
     std::unordered_map<std::string, int> seq_name_to_index;
