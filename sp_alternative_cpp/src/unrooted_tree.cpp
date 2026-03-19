@@ -5,11 +5,11 @@
 #include <stdexcept>
 
 UnrootedTree::UnrootedTree(Node* _anchor, const std::vector<std::unique_ptr<Node>>& _all_nodes) {
-    anchor = _anchor;
     // Deep copy unique_ptrs
     for (auto& n : _all_nodes) {
         all_nodes.push_back(std::make_unique<Node>(*n));
     }
+	anchor = all_nodes[_anchor->id].get();
     keys = anchor->keys;
     std::vector<std::string> sorted(keys.begin(), keys.end());
     std::sort(sorted.begin(), sorted.end());
