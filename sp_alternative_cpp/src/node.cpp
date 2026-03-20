@@ -100,7 +100,7 @@ std::vector<AdjEntry> Node::get_adj(std::vector<Node*>all_nodes) const {
     for (auto child_id : children_ids) {
         res.push_back({ child_id, all_nodes[child_id]->branch_length});
     }
-    if (father_id) {
+    if (father_id != -1) {
         res.push_back({ father_id, branch_length});
     }
     return res;
