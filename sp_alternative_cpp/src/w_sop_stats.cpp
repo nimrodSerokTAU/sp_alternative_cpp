@@ -44,7 +44,7 @@ std::pair<std::vector<double>, std::vector<double>> WSopStats::compute_seq_w_hen
 std::vector<double> WSopStats::get_weight_list(const UnrootedTree& tree, RootingMethods rooting_method,
                                                  const std::vector<std::string>& seq_names) {
     std::string key = rooting_method_to_string(rooting_method);
-    auto rt = std::make_unique<RootedTree>(RootedTree::root_tree(tree, rooting_method));
+    auto rt = std::make_unique<RootedTree>(RootedTree(tree, rooting_method));
     rt->calc_seq_w();
     std::vector<double> weights;
     for (const auto& s_name : seq_names) {

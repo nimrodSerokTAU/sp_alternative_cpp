@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <utility>
 #include <filesystem>
+#include "node.h"
+
 
 namespace fs = std::filesystem;
 
@@ -18,3 +20,4 @@ double calc_kimura_distance_from_other(const std::string& aligned_seq, const std
 
 double calc_percentile(std::vector<double>& values, int percentile);
 double calc_percentile_int(std::vector<int>& values, int percentile);
+std::vector<Node*> get_raw_pointers_from_unique(const std::vector<std::unique_ptr<Node>>& all_nodes);

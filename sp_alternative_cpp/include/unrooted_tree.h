@@ -26,9 +26,6 @@ public:
     }
 
     UnrootedTree(Node* _anchor, const std::vector<std::unique_ptr<Node>>& _all_nodes);
- 
-    static UnrootedTree create_from_newick_file(const std::filesystem::path& path);
-    static UnrootedTree create_from_newick_str(const std::string& newick_str);
 
     std::set<std::string> get_internal_edges_set() const;
     int calc_rf(const UnrootedTree& other_tree) const;
@@ -41,10 +38,9 @@ public:
 
 // Free functions for Newick parsing
 std::string read_newick_from_file(const std::filesystem::path& input_file_path);
-std::pair<Node*, std::vector<std::unique_ptr<Node>>> root_from_newick_str(const std::string& newick_str);
-std::pair<Node*, std::vector<std::unique_ptr<Node>>> create_a_tree_from_newick(const std::string& newick);
 Node* create_node_from_children(std::vector<std::vector<Node*>>& open_nodes_per_level,
                                  int level, double branch_length, int node_inx,
                                  std::vector<std::unique_ptr<Node>>& storage);
+std::pair<Node*, std::vector<std::unique_ptr<Node>>> create_a_tree_from_newick(const std::string& newick);
 
 constexpr double TREE_EPSILON = 0.001;

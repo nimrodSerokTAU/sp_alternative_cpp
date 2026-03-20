@@ -3,11 +3,12 @@
 #include <algorithm>
 #include <queue>
 #include <stdexcept>
+#include "utils.h"
 
 UnrootedTree::UnrootedTree(Node* _anchor, const std::vector<std::unique_ptr<Node>>& _all_nodes) {
     // Deep copy unique_ptrs
     for (auto& n : _all_nodes) {
-        all_nodes.push_back(std::make_unique<Node>(*n));
+        all_nodes.push_back(std::make_unique<Node>(*n)); // TODO: this is the problem
     }
 	anchor = all_nodes[_anchor->id].get();
     keys = anchor->keys;
@@ -16,21 +17,10 @@ UnrootedTree::UnrootedTree(Node* _anchor, const std::vector<std::unique_ptr<Node
     differentiator_key = sorted[0];
 }
 
-UnrootedTree UnrootedTree::create_from_newick_file(const std::filesystem::path& path) {
-    std::string newick_str = read_newick_from_file(path);
-    return create_from_newick_str(newick_str);
-}
-
-UnrootedTree UnrootedTree::create_from_newick_str(const std::string& newick_str) {
-    auto [root, temp_all_nodes] = root_from_newick_str(newick_str);
-    UnrootedTree tree(root, std::move(temp_all_nodes));
-    return tree;
-}
-
 std::set<std::string> UnrootedTree::get_internal_edges_set() const {
     std::set<std::string> edges;
     for (const auto& n : all_nodes) {
-        if (!n->children.empty()) {
+        if (!n->children_ids.empty()) {
             std::string edge_str =
                 n->get_keys_unrooted_string(keys, differentiator_key);
 
@@ -59,7 +49,7 @@ int UnrootedTree::calc_rf(const UnrootedTree& other_tree) const {
 std::vector<double> UnrootedTree::get_branches_lengths_list() const {
     std::vector<double> bl_list;
     for (const auto& n : all_nodes) {
-        if (n->father != nullptr) {
+        if (n->father_id != -1) {
             bl_list.push_back(std::max(n->branch_length, TREE_EPSILON));
         }
     }
@@ -78,11 +68,13 @@ std::tuple<Node*, std::vector<PathEntry>, double> UnrootedTree::get_longest_path
     std::deque<Node*> queue_nodes;
     queue_nodes.push_back(u);
 
+    std::vector<Node*> raw_nodes = get_raw_pointers_from_unique(all_nodes);
+
     while (!queue_nodes.empty()) {
         Node* front = queue_nodes.front();
         queue_nodes.pop_front();
 
-        for (const auto& adj : front->get_adj()) {
+        for (const auto& adj : front->get_adj(raw_nodes)) {
             if (adj.node_id >= 0 && adj.node_id <= nodes_count && nodes_by_id[adj.node_id] == nullptr) {
                 // Find the actual node
                 Node* adj_node = nullptr;
@@ -132,11 +124,13 @@ double UnrootedTree::get_longest_dist_to(Node* dest) const {
     std::deque<Node*> queue_nodes;
     queue_nodes.push_back(dest);
 
+    std::vector<Node*> raw_nodes = get_raw_pointers_from_unique(all_nodes);
+
     while (!queue_nodes.empty()) {
         Node* front = queue_nodes.front();
         queue_nodes.pop_front();
 
-        for (const auto& adj : front->get_adj()) {
+        for (const auto& adj : front->get_adj(raw_nodes)) {
             if (adj.node_id >= 0 && adj.node_id <= nodes_count && nodes_by_id[adj.node_id] == nullptr) {
                 Node* adj_node = nullptr;
                 for (const auto& n : all_nodes) {
@@ -185,21 +179,23 @@ Node* create_node_from_children(std::vector<std::vector<Node*>>& open_nodes_per_
 
     // Collect keys from children
     std::set<std::string> node_keys;
+    std::vector<int> children_ids;
     for (auto* child : open_nodes_per_level[child_level]) {
         node_keys.insert(child->keys.begin(), child->keys.end());
+		children_ids.push_back(child->id);
     }
 
     // Children list
     std::vector<Node*> child_list = open_nodes_per_level[child_level];
 
     // Create node and push into storage
-    auto current_node = std::make_unique<Node>(node_inx, node_keys, child_list, 0, branch_length);
+    auto current_node = std::make_unique<Node>(node_inx, node_keys, children_ids, 0.0, branch_length);
     Node* current_node_ptr = current_node.get();
     storage.push_back(std::move(current_node));
 
     // Link children to this parent
     for (auto* child : child_list) {
-        child->set_a_father(current_node_ptr);
+        child->set_a_father(current_node_ptr->id);
     }
 
     return current_node_ptr;
@@ -238,7 +234,7 @@ std::pair<Node*, std::vector<std::unique_ptr<Node>>> create_a_tree_from_newick(c
             if (!current_key.empty()) {
                 // Leaf node
                 std::set<std::string> keys = { current_key };
-                auto node = std::make_unique<Node>(static_cast<int>(all_nodes.size()), keys, std::vector<Node*>{}, 0, bl);
+                auto node = std::make_unique<Node>(static_cast<int>(all_nodes.size()), keys, std::vector<int>{}, 0.0, bl);
                 Node* node_ptr = node.get();
                 all_nodes.push_back(std::move(node));
                 open_nodes_per_level[level].push_back(node_ptr);
@@ -267,44 +263,4 @@ std::pair<Node*, std::vector<std::unique_ptr<Node>>> create_a_tree_from_newick(c
     }
 
     return { nullptr, std::move(all_nodes) };
-}
-
-std::pair<Node*, std::vector<std::unique_ptr<Node>>> root_from_newick_str(const std::string& newick_str)
-{
-    auto [root, all_nodes] = create_a_tree_from_newick(newick_str);
-
-    if (root->children.size() == 3)
-        return { root, std::move(all_nodes) };
-
-    if (root->children.size() == 2) {
-        // Sort children: by branch length ascending, then by number of children descending
-        std::sort(root->children.begin(), root->children.end(),
-            [](const Node* a, const Node* b) {
-                if (a->children.size() != b->children.size())
-                    return a->children.size() > b->children.size();
-                return a->branch_length < b->branch_length;
-            });
-
-        if (root->children[0]->children.size() == 2) {
-            std::vector<Node*> res = {
-                root->children[0]->children[0],
-                root->children[0]->children[1],
-                root->children[1]
-            };
-
-            std::set<std::string> combined_keys;
-            double cbl_sum = 0;
-            for (auto* child : res) {
-                combined_keys.insert(child->keys.begin(), child->keys.end());
-                cbl_sum += child->children_bl_sum + child->branch_length;
-            }
-
-            auto anchor = std::make_unique<Node>(static_cast<int>(all_nodes.size()), combined_keys, res, cbl_sum);
-            Node* anchor_ptr = anchor.get();
-            all_nodes.push_back(std::move(anchor));
-            return { anchor_ptr, std::move(all_nodes) };
-        }
-    }
-
-    return { root, std::move(all_nodes) };
 }

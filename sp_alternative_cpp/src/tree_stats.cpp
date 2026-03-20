@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <set>
 #include <functional>
+#include "utils.h"
 
 TreeStats::TreeStats(const std::string& code, int taxa_num, int msa_length)
     : BasicStats(code, taxa_num, msa_length,
@@ -62,15 +63,16 @@ std::set<char> intersect_sets(const std::set<char>& a, const std::set<char>& b) 
 std::vector<int> calc_parsimony(const UnrootedTree& unrooted_tree,
     const std::vector<std::string>& aln,
     const std::vector<std::string>& names) {
-    // --- 1. Deep-copy all nodes including anchor ---
-    std::unordered_map<Node*, Node*> old_to_new;
-    std::vector<std::unique_ptr<Node>> temp_nodes;
+
+	// --- 1. Get raw pointers from unique_ptrs ---
+	std::vector<Node*> raw_nodes = get_raw_pointers_from_unique(unrooted_tree.all_nodes);
 
     // --- 2. Prepare postorder traversal ---
     std::vector<Node*> postorder;
     std::function<void(Node*)> dfs = [&](Node* node) {
-        for (Node* c : node->children) {
-            if (c->children.size() > 0) {
+        for (int node_id : node->children_ids) {
+			Node* c = unrooted_tree.all_nodes[node_id].get();
+            if (c->children_ids.size() > 0) {
                 dfs(c);
             }
             postorder.push_back(c);
@@ -93,17 +95,18 @@ std::vector<int> calc_parsimony(const UnrootedTree& unrooted_tree,
         int score = 0;
 
         for (Node* node : postorder) {
-            if (node->children.empty()) {
+            if (node->children_ids.empty()) {
                 // leaf
 
                 char c = aln[seq_name_to_index[*node->keys.begin()]][col];
                 states[node] = { c };
             }
-            else if (node->children.size() == 2) {
+            else if (node->children_ids.size() == 2) {
                 std::set<char> intersection, uni;
                 bool first = true;
-                for (Node* child : node->children) {
-                    if (child == node->father) continue;
+                for (int child_id : node->children_ids) {
+                    if (child_id == node->father_id) continue;
+					Node* child = unrooted_tree.all_nodes[child_id].get();
                     if (first) {
                         intersection = states[child];
                         uni = states[child];
@@ -127,9 +130,9 @@ std::vector<int> calc_parsimony(const UnrootedTree& unrooted_tree,
             else { // this is the 3-way root:
                 std::set<char> intersection, uni;
                 bool first = true;
-                Node* first_child = unrooted_tree.anchor->children[0];
-                Node* second_child = unrooted_tree.anchor->children[1];
-                Node* third_child = unrooted_tree.anchor->children[2];
+                Node* first_child = raw_nodes[unrooted_tree.anchor->children_ids[0]];
+                Node* second_child = raw_nodes[unrooted_tree.anchor->children_ids[1]];
+                Node* third_child = raw_nodes[unrooted_tree.anchor->children_ids[2]];
 
                 std::set<char> state_a = states[first_child];
                 std::set<char> state_b = states[second_child];

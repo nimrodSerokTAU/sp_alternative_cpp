@@ -92,9 +92,11 @@ void MSA::build_nj_tree() {
     std::vector<std::vector<double>> distance_matrix(n, std::vector<double>(n, 0.0));
     std::vector<unique_ptr<Node>>nodes;
 
+    std::vector<Node*> raw_nodes = get_raw_pointers_from_unique(nodes);
+
     for (int i = 0; i < n; i++) {
-        auto node = std::make_unique<Node>(i, std::set<std::string>{seq_names[i]}, std::vector<Node*>{}, 0);
-        node->fill_newick();
+        auto node = std::make_unique<Node>(i, std::set<std::string>{seq_names[i]}, std::vector<int>{}, 0.0);
+        node->fill_newick(raw_nodes);
         nodes.push_back(move(node));
         for (int j = i; j < n; j++) {
             double kd = calc_kimura_distance_from_other(sequences[i], sequences[j]);

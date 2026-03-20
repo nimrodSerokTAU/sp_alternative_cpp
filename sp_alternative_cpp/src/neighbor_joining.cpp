@@ -107,14 +107,14 @@ void NeighborJoining::merge_two_clusters() {
 
     auto new_node = std::make_unique<Node>(static_cast<int>(all_nodes.size()),
                                             keysOfNewNode,
-                                            std::vector<Node*>{working_nodes[f_inx], working_nodes[s_inx]},
+                                            std::vector<int>{working_nodes[f_inx]->id, working_nodes[s_inx]->id},
                                             children_bl_sum,
                                             0);
 
     Node* new_node_ptr = new_node.get();
     all_nodes.push_back(std::move(new_node));
-    working_nodes[f_inx]->set_a_father(new_node_ptr);
-    working_nodes[s_inx]->set_a_father(new_node_ptr);
+    working_nodes[f_inx]->set_a_father(new_node_ptr->id);
+    working_nodes[s_inx]->set_a_father(new_node_ptr->id);
 
     
     working_nodes[f_inx] = new_node_ptr;
@@ -139,14 +139,14 @@ Node* NeighborJoining::merge_last_three() {
     }
     auto new_node = std::make_unique<Node>(static_cast<int>(all_nodes.size()),
         keys,
-        std::vector<Node*>{working_nodes[0], working_nodes[1], working_nodes[2]}, children_bl_sum);
+        std::vector<int>{working_nodes[0]->id, working_nodes[1]->id, working_nodes[2]->id}, children_bl_sum);
     
     all_nodes.push_back(std::move(new_node));
 
     Node* new_node_ptr = all_nodes.back().get();
 
     for (int i = 0; i < 3; i++) {
-        working_nodes[i]->set_a_father(new_node_ptr);
+        working_nodes[i]->set_a_father(new_node_ptr->id);
     }
     return new_node_ptr;
 }

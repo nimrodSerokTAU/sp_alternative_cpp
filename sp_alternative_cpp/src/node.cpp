@@ -4,38 +4,40 @@
 
 Node::Node(int _id,
     const std::set<std::string>& _keys,
-    const std::vector<Node*>& _children,
+    const std::vector<int>& _children_ids,
     double _children_bl_sum,
     double _branch_length)
     : id(_id),
     keys(_keys),
-    children(_children),
-    children_bl_sum(_children_bl_sum),
+    father_id(-1),
     branch_length(_branch_length),
-    father(nullptr)
+    children_ids(_children_ids),
+	newick_part(""),
+	parsimony_set({}),
+    children_bl_sum(_children_bl_sum),
+	bl_sum_on_differentiator(0),
+	bl_sum_on_non_differentiator(0),
+	rank_from_root(0),
+	w_from_root({}),
+    weight(0)
 {
 }
 
-Node* Node::create_from_children(const std::vector<Node*>& children_list, int inx,
-                                  std::vector<Node*>& storage) {
-    std::set<std::string> combined_keys;
-    double cbl_sum = 0;
-    for (auto* child : children_list) {
-        combined_keys.insert(child->keys.begin(), child->keys.end());
-        cbl_sum += child->children_bl_sum + child->branch_length;
-    }
-    Node* node = new Node(inx, combined_keys, children_list, cbl_sum);
-    storage.push_back(node);
-    return node;
-}
+//Node* Node::create_from_children(const std::vector<Node*>& children_list, int inx,
+//                                  std::vector<Node*>& storage) {
+//    std::set<std::string> combined_keys;
+//    double cbl_sum = 0;
+//    for (auto* child : children_list) {
+//        combined_keys.insert(child->keys.begin(), child->keys.end());
+//        cbl_sum += child->children_bl_sum + child->branch_length;
+//    }
+//    Node* node = new Node(inx, combined_keys, children_list, cbl_sum);
+//    storage.push_back(node);
+//    return node;
+//}
 
-void Node::add_child_to_me(Node* child_node) {
-    children.push_back(child_node);
-    child_node->set_a_father(this);
-}
-
-void Node::set_a_father(Node* other_node) {
-    father = other_node;
+void Node::set_a_father(int other_node_id) {
+    father_id = other_node_id;
 }
 
 std::string Node::get_keys_rooted_string() const {
@@ -80,11 +82,11 @@ std::string Node::get_keys_unrooted_string(const std::set<std::string>& tree_key
     return result;
 }
 
-void Node::fill_newick() {
-    if (children.empty()) {
+void Node::fill_newick(std::vector<Node*>all_nodes) {
+    if (children_ids.empty()) {
         newick_part = *keys.begin() + ":" + std::to_string(branch_length);
-    } else if (children.size() == 2) {
-        newick_part = "(" + children[0]->newick_part + "," + children[1]->newick_part + "):" +
+    } else if (children_ids.size() == 2) {
+        newick_part = "(" + all_nodes[children_ids[0]]->newick_part + "," + all_nodes[children_ids[1]]->newick_part + "):" +
                       std::to_string(branch_length);
     }
 }
@@ -93,19 +95,19 @@ void Node::set_parsimony_set(const std::set<std::string>& new_set) {
     parsimony_set = new_set;
 }
 
-std::vector<AdjEntry> Node::get_adj() const {
+std::vector<AdjEntry> Node::get_adj(std::vector<Node*>all_nodes) const {
     std::vector<AdjEntry> res;
-    for (auto* child : children) {
-        res.push_back({child->id, child->branch_length});
+    for (auto child_id : children_ids) {
+        res.push_back({ child_id, all_nodes[child_id]->branch_length});
     }
-    if (father) {
-        res.push_back({father->id, branch_length});
+    if (father_id) {
+        res.push_back({ father_id, branch_length});
     }
     return res;
 }
 
-void Node::update_children_only(const std::vector<Node*>& children_list) {
-    children = children_list;
+void Node::update_children_only(const std::vector<int>& children_list) {
+    children_ids = children_list;
 }
 
 void Node::set_rank_from_root(int rank) {
@@ -116,11 +118,12 @@ void Node::set_w_from_root(const std::vector<double>& w_list) {
     w_from_root = w_list;
 }
 
-void Node::update_data_from_children() {
-    if (!children.empty()) {
+void Node::update_data_from_children(std::vector<Node*>all_nodes) {
+    if (!children_ids.empty()) {
         keys.clear();
         children_bl_sum = 0;
-        for (auto* child : children) {
+        for (auto child_id : children_ids) {
+			Node* child = all_nodes[child_id];
             keys.insert(child->keys.begin(), child->keys.end());
             children_bl_sum += child->children_bl_sum + child->branch_length;
         }

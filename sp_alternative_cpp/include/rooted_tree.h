@@ -26,14 +26,14 @@ public:
     //RootedTree(Node* root, const std::vector<Node*>& all_nodes, const std::set<std::string>& keys);
     RootedTree(Node* r, std::vector<std::unique_ptr<Node>> nodes, const std::set<std::string>& k);
 
-    static RootedTree root_tree(const UnrootedTree& unrooted, RootingMethods rooting_method);
-    static RootedTree from_unrooted(const UnrootedTree& ut);
+    RootedTree(const UnrootedTree& unrooted, RootingMethods rooting_method);
 
     static RootingPoint find_shallowest_tree(
         const UnrootedTree& ut,
         const std::vector<RootingPoint>& rooting_points);
 
-    void calc_clustal_w();
+
+    void calc_clustal_w(std::vector<Node*> raw_nodes);
     void calc_seq_w();
 };
 
@@ -45,7 +45,7 @@ std::vector<RootingPoint> calc_min_differential_sum(const UnrootedTree& unrooted
 void recalc_tree_down(Node* node, Node* father, int broke_id,
                        std::vector<std::tuple<Node*, Node*, int>>& nodes_to_recalc,
                        std::vector<Node*>& all_nodes);
-void fill_nodes_w(Node* node, std::deque<Node*>& nodes_to_recalc);
+void fill_nodes_w(Node* node, std::deque<Node*>& nodes_to_recalc, std::vector<Node*>& all_nodes);
 double sum_bl_up_to_node_id(Node* origin, int dest_id, const std::vector<Node*>& all_nodes);
 RootingPoint calc_potential_root_on_branch(double bl, double w_to_orig, double w_to_dest,
                                             double delta, int origin, int dest, double min_bl);

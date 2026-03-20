@@ -69,16 +69,6 @@ void multiple_msa_calc_features_and_labels(const Configuration& config) {
             true_msa.read_from_fasta(dir_path / ordered.true_file_name);
         }
 
-        bool need_rf = config.stats_output.count(StatsOutput::ALL) ||
-                       config.stats_output.count(StatsOutput::RF_LABEL);
-        if (need_rf) {
-            if (!ordered.true_tree_file_name.empty()) {
-                auto tree = UnrootedTree::create_from_newick_file(dir_path / ordered.true_tree_file_name);
-                true_msa.set_tree(std::move(tree));
-            } else {
-                true_msa.build_nj_tree();
-            }
-        }
 
         bool is_init_files = true;
         for (const auto& inferred_file_name : ordered.other_file_names) {

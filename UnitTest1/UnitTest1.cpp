@@ -804,9 +804,9 @@ namespace spalternativeUnitTests
 			{
 				std::set<int> childrenIds;
 
-				for (Node* child : res.second[i]->children)
+				for (int child_id : res.second[i]->children_ids)
 				{
-					childrenIds.insert(child->id);
+					childrenIds.insert(child_id);
 				}
 
 				Assert::IsTrue(
@@ -859,13 +859,13 @@ namespace spalternativeUnitTests
 			for (size_t i = 0; i < keys_case_nj.size(); ++i)
 			{
 				set<string> thisKeySet = { keys_case_nj[i] };
-				vector<Node*> children = {}; // leaf node
+				vector<int> children_ids = {}; // leaf node
 				auto new_node = make_unique<Node>(
-					static_cast<int>(i),     // id
-					thisKeySet,              // keys
-					children,                // children
-					1.0,                     // children_bl_sum
-					0.0                      // branch_length
+					static_cast<int>(i),
+					thisKeySet,         
+					children_ids,       
+					1.0,                
+					0.0                 
 				);
 
 				nodesP.push_back(std::move(new_node)); // MOVE is required!
@@ -899,11 +899,11 @@ namespace spalternativeUnitTests
 		{
 			vector<unique_ptr<Node>> all_nodes;
 
-			auto n_a = make_unique<Node>(0, set<string>{"a"}, vector<Node*>{}, 0);
-			auto n_b = make_unique<Node>(1, set<string>{"b"}, vector<Node*>{}, 0);
-			auto n_c = make_unique<Node>(2, set<string>{"c"}, vector<Node*>{}, 0);
-			auto n_d = make_unique<Node>(3, set<string>{"d"}, vector<Node*>{}, 0);
-			auto n_e = make_unique<Node>(4, set<string>{"e"}, vector<Node*>{}, 0);
+			auto n_a = make_unique<Node>(0, set<string>{"a"}, vector<int>{}, 0.0);
+			auto n_b = make_unique<Node>(1, set<string>{"b"}, vector<int>{}, 0.0);
+			auto n_c = make_unique<Node>(2, set<string>{"c"}, vector<int>{}, 0.0);
+			auto n_d = make_unique<Node>(3, set<string>{"d"}, vector<int>{}, 0.0);
+			auto n_e = make_unique<Node>(4, set<string>{"e"}, vector<int>{}, 0.0);
 
 			// Keep raw pointers
 			Node* p_a = n_a.get();
@@ -921,34 +921,34 @@ namespace spalternativeUnitTests
 			// --- 2. Internal nodes ---
 
 			// n_a_b
-			auto n_a_b = make_unique<Node>(5, set<string>{}, vector<Node*>{p_a, p_b}, 0);
+			auto n_a_b = make_unique<Node>(5, set<string>{}, vector<int>{p_a->id, p_b->id}, 0);
 			Node* p_a_b = n_a_b.get();
-			p_a->set_a_father(p_a_b);
-			p_b->set_a_father(p_a_b);
+			p_a->set_a_father(p_a_b->id);
+			p_b->set_a_father(p_a_b->id);
 			p_a_b->keys.insert(p_a->keys.begin(), p_a->keys.end());
 			p_a_b->keys.insert(p_b->keys.begin(), p_b->keys.end());
 
 			all_nodes.push_back(std::move(n_a_b));
 
 			// n_a_b_c
-			auto n_a_b_c = make_unique<Node>(6, set<string>{}, vector<Node*>{p_a_b, p_c}, 0);
+			auto n_a_b_c = make_unique<Node>(6, set<string>{}, vector<int>{p_a_b->id, p_c->id}, 0);
 			Node* p_a_b_c = n_a_b_c.get();
-			p_a_b->set_a_father(p_a_b_c);
-			p_c->set_a_father(p_a_b_c);
+			p_a_b->set_a_father(p_a_b_c->id);
+			p_c->set_a_father(p_a_b_c->id);
 			p_a_b_c->keys.insert(p_a_b->keys.begin(), p_a_b->keys.end());
 			p_a_b_c->keys.insert(p_c->keys.begin(), p_c->keys.end());
 
 			all_nodes.push_back(std::move(n_a_b_c));
 
 			// anchor
-			auto anchor_node = make_unique<Node>(7, set<string>{}, vector<Node*>{p_a_b_c, p_d, p_e}, 0);
+			auto anchor_node = make_unique<Node>(7, set<string>{}, vector<int>{p_a_b_c->id, p_d->id, p_e->id}, 0);
 			Node* anchor = anchor_node.get();
 
-			p_a_b_c->set_a_father(anchor);
-			p_d->set_a_father(anchor);
-			p_e->set_a_father(anchor);
+			p_a_b_c->set_a_father(anchor->id);
+			p_d->set_a_father(anchor->id);
+			p_e->set_a_father(anchor->id);
 
-			for (auto* c : anchor->children) {
+			for (auto* c : vector<Node*>{ p_a_b_c , p_d, p_e }) {
 				anchor->keys.insert(c->keys.begin(), c->keys.end());
 			}
 

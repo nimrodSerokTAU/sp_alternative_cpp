@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <iostream>
 #include <filesystem>
+#include <node.h>
 
 namespace fs = std::filesystem;
 
@@ -110,4 +111,13 @@ double calc_percentile_int(std::vector<int>& values, int percentile) {
     }
     double frac = index - lower;
     return values[lower] * (1.0 - frac) + values[upper] * frac;
+}
+
+std::vector<Node*> get_raw_pointers_from_unique(const std::vector<std::unique_ptr<Node>>& all_nodes) {
+    std::vector<Node*> raw_nodes;
+    raw_nodes.reserve(all_nodes.size());
+    for (const auto& ptr : all_nodes) {
+        raw_nodes.push_back(ptr.get());
+    }
+    return raw_nodes;
 }
