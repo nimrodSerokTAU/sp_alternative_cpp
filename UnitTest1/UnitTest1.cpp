@@ -16,6 +16,8 @@
 #include <algorithm>
 #include <cmath>
 #include "../sp_alternative_cpp/include/tree_stats.h"
+#include "../sp_alternative_cpp/include/msa.h"
+#include "../sp_alternative_cpp/include/w_Sop_stats.h"
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std;
 
@@ -978,6 +980,42 @@ namespace spalternativeUnitTests
 			Assert::AreEqual(res.size(), expected.size());
 			for (size_t i = 0; i < res.size(); i++) {
 				Assert::AreEqual(res[i], expected[i]);
+			}
+		}
+
+		TEST_METHOD(henikoff_w)
+		{
+			auto msa_ptr = make_unique<MSA>("test");
+			msa_ptr->add_sequence(string{"AT-CGC"}, "a");
+			msa_ptr->add_sequence(string{"ACATG-"}, "b");
+			msa_ptr->add_sequence(string{"AT-CG-"}, "c");
+			msa_ptr->add_sequence(string{"ATC-GA"}, "d");
+			msa_ptr->add_sequence(string{"TTATGC"}, "e");
+			auto w_sop_ptr = make_unique<WSopStats>(msa_ptr->dataset_name, msa_ptr->get_taxa_num(), msa_ptr->get_msa_len());
+			std::pair<std::vector<double>, std::vector<double>> seq_weights = w_sop_ptr->compute_seq_w_henikoff_vars(msa_ptr->sequences);
+			vector<double> seq_weights_no_gap_expected = {
+				0.15454545454545454,
+				0.22272727272727275,
+				0.10909090909090909,
+				0.24545454545454548,
+				0.2681818181818182,
+			};
+			vector<double> seq_weights_with_gap_expected = {
+				0.15714285714285717,
+				0.21071428571428572,
+				0.15714285714285717,
+				0.2642857142857143,
+				0.21071428571428572,
+			};
+				
+			for (size_t i = 0; i < seq_weights_with_gap_expected.size(); ++i)
+			{
+				Assert::AreEqual(seq_weights.first[i], seq_weights_with_gap_expected[i]);
+			}
+
+			for (size_t i = 0; i < seq_weights_no_gap_expected.size(); ++i)
+			{
+				Assert::AreEqual(seq_weights.second[i], seq_weights_no_gap_expected[i]);
 			}
 		}
 	};

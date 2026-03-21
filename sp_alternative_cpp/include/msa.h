@@ -31,7 +31,8 @@ public:
                                const std::vector<SPScore>& sp_models,
                                const std::filesystem::path& output_dir_path,
                                const UnrootedTree* true_tree,
-                               bool is_init_file);
+                               bool is_init_file,
+                               const std::vector<std::vector<std::set<std::string>>>& profile_b_h);
 
     static void print_stats_file(const std::vector<StatValue>& stats_data,
                                   const std::filesystem::path& output_dir_path,

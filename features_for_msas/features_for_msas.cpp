@@ -26,7 +26,7 @@ int main()
     std::vector<EvoModel> models;
     for (const auto& modelConfig : config["models_list"]) {
         int gapOpenCost = modelConfig["gap_open_cost"].get<int>();
-        int gapExtendCost = modelConfig["gap_extend_cost"].get<int>();
+        double gapExtendCost = modelConfig["gap_extend_cost"].get<double>();
         std::string substitutionMatrix = modelConfig["matrix_file_name"].get<std::string>();
         EvoModel evoModel(gapOpenCost, gapExtendCost, substitutionMatrix);
         models.push_back(evoModel);

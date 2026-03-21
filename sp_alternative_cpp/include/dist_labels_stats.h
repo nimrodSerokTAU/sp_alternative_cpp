@@ -15,7 +15,7 @@ public:
     DistanceLabelsStats(const std::string& code, int taxa_num, int msa_length);
 
     void set_my_distance_from_true(const std::vector<std::string>& inferred_msa,
-                                     const std::vector<std::string>& true_msa);
+                                   const std::vector<std::vector<std::set<std::string>>>& profile_b_h);
     void set_rf_from_true(const UnrootedTree& my_tree, const UnrootedTree& true_tree);
 
     std::pair<std::vector<StatValue>, std::vector<std::string>> get_print_rf() const;

@@ -136,3 +136,53 @@ double compute_distance(const std::vector<std::string>& profile_a, const std::ve
     }
     return -1;
 }
+
+double compute_distance_from_known_msa(const std::vector<std::string>& profile_a, const std::vector<std::vector<std::set<std::string>>> &profile_b_h, DistanceType distance_type) {
+    auto profile_a_naming = translate_profile_naming(profile_a, distance_type);
+    int seq_count = static_cast<int>(profile_a.size());
+    auto profile_a_h = create_h_table(profile_a_naming, distance_type);
+     
+    std::vector<double> d_list;
+    double numerator_sum = 0;
+    double denominator_sum = 0;
+
+    for (int i = 0; i < seq_count; i++) {
+        for (int j = 0; j < static_cast<int>(profile_a_h[i].size()); j++) {
+            const auto& h_a_i = profile_a_h[i][j];
+            const auto& h_b_i = profile_b_h[i][j];
+            if (!h_a_i.empty() || !h_b_i.empty()) {
+                if (distance_type == DistanceType::D_SSP) {
+                    std::set<std::string> intersection, union_set;
+                    std::set_intersection(h_a_i.begin(), h_a_i.end(), h_b_i.begin(), h_b_i.end(),
+                        std::inserter(intersection, intersection.begin()));
+                    std::set_union(h_a_i.begin(), h_a_i.end(), h_b_i.begin(), h_b_i.end(),
+                        std::inserter(union_set, union_set.begin()));
+                    numerator_sum += intersection.size();
+                    denominator_sum += union_set.size();
+                }
+                else {
+                    double d_i_j = get_place_d(h_a_i, h_b_i, distance_type);
+                    d_list.push_back(d_i_j);
+                }
+            }
+            else {
+                d_list.push_back(0);
+            }
+        }
+    }
+
+    if (distance_type == DistanceType::D_SSP) {
+        if (denominator_sum == 0) return -1;
+        return 1.0 - (numerator_sum / denominator_sum);
+    }
+    else if (!d_list.empty()) {
+        return std::accumulate(d_list.begin(), d_list.end(), 0.0) / d_list.size();
+    }
+    return -1;
+}
+
+std::vector<std::vector<std::set<std::string>>> compute_msa_dist_h(const std::vector<std::string>& msa, DistanceType distance_type) {
+    auto profile_naming = translate_profile_naming(msa, distance_type);
+	return create_h_table(profile_naming, distance_type);
+}
+
