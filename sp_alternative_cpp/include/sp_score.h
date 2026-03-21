@@ -63,7 +63,7 @@ public:
     };
     EfficientSpParts compute_efficient_sp_parts(const std::vector<std::string>& profile) const;
 
-    int get_pair_score(int i, int j) const;
+    double get_pair_score(int i, int j) const;
 
     std::vector<double> compute_w_sp_s_and_sp_ge(const std::vector<std::string>& alignment,
                                                    const std::vector<double>& seq_w) const;

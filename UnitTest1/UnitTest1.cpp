@@ -1018,5 +1018,26 @@ namespace spalternativeUnitTests
 				Assert::AreEqual(seq_weights.second[i], seq_weights_no_gap_expected[i]);
 			}
 		}
+
+		TEST_METHOD(henikoff_with_gaps_value)
+		{
+			auto msa_ptr = make_unique<MSA>("test");
+			msa_ptr->add_sequence(string{ "AT-CGC" }, "a");
+			msa_ptr->add_sequence(string{ "ACATG-" }, "b");
+			msa_ptr->add_sequence(string{ "AT-CG-" }, "c");
+			msa_ptr->add_sequence(string{ "ATC-GA" }, "d");
+			msa_ptr->add_sequence(string{ "TTATGC" }, "e");
+			
+			EvoModel evoModel1(-10, -0.5, "Blosum50");
+			vector<EvoModel> models = { evoModel1 };
+			Configuration config(models, SopCalcTypes::EFFICIENT, "", "", "", { WeightMethods::HENIKOFF_WG });
+			auto w_sop_ptr = make_unique<WSopStats>(msa_ptr->dataset_name, msa_ptr->get_taxa_num(), msa_ptr->get_msa_len());
+			w_sop_ptr->calc_seq_weights(config.additional_weights, msa_ptr->sequences, msa_ptr->seq_names, UnrootedTree());
+			SPScore sp(evoModel1, blosum62Path);
+			w_sop_ptr->calc_w_sp(msa_ptr->sequences, sp);
+			double henikoff_with_gaps = w_sop_ptr->sp_HENIKOFF_with_gaps;
+			double expected_value = -1.682110969387752;
+			Assert::IsTrue(abs(henikoff_with_gaps - expected_value) < 1e-10);
+		}
 	};
 }

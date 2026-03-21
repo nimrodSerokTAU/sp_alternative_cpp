@@ -195,13 +195,13 @@ SPScore::EfficientSpParts SPScore::compute_efficient_sp_parts(const std::vector<
     return {sp_match, sp_mismatch, go_score, sp_ge, mc, mmc, go_count, gc};
 }
 
-int SPScore::get_pair_score(int i, int j) const {
+double SPScore::get_pair_score(int i, int j) const {
     int min_i = std::min(i, j);
     int max_j = std::max(i, j);
     if (max_j < static_cast<int>(w_matrix.size())) {
         return w_matrix[min_i][max_j];
     }
-    return static_cast<int>(ge_cost);
+    return ge_cost;
 }
 
 std::vector<double> SPScore::compute_w_sp_s_and_sp_ge(const std::vector<std::string>& alignment,
@@ -226,13 +226,13 @@ std::vector<double> SPScore::compute_w_sp_s_and_sp_ge(const std::vector<std::str
         for (int ci = 0; ci < options_count - 1; ci++) {
             if (histo[ci].count != 0) {
                 sp_subs_and_ge_score[col] +=
-                    static_cast<double>(get_pair_score(ci, ci)) *
-                    (histo[ci].sum * histo[ci].sum - histo[ci].sq_sum) / 2.0;
+                    static_cast<double>(get_pair_score(ci, ci) *
+                    (histo[ci].sum * histo[ci].sum - histo[ci].sq_sum) / 2.0);
                 for (int j = ci + 1; j < options_count; j++) {
                     if (histo[j].count != 0) {
                         sp_subs_and_ge_score[col] +=
-                            static_cast<double>(get_pair_score(ci, j)) *
-                            histo[ci].sum * histo[j].sum;
+                            static_cast<double>(get_pair_score(ci, j) *
+                            histo[ci].sum * histo[j].sum);
                     }
                 }
             }
