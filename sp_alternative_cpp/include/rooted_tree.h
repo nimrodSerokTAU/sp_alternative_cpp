@@ -49,9 +49,6 @@ void fill_nodes_w(Node* node, std::deque<Node*>& nodes_to_recalc, std::vector<No
 double sum_bl_up_to_node_id(Node* origin, int dest_id, const std::vector<Node*>& all_nodes);
 RootingPoint calc_potential_root_on_branch(double bl, double w_to_orig, double w_to_dest,
                                             double delta, int origin, int dest, double min_bl);
-std::pair<Node*, std::vector<Node*>> create_root(std::vector<Node*>& all_nodes,
-                                                   const RootingPoint& rooting_point,
-                                                   std::vector<std::unique_ptr<Node>>& storage);
 
 double longest_dist_from_virtual_root(
     const UnrootedTree& tree,

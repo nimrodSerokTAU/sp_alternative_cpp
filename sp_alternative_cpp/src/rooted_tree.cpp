@@ -24,7 +24,7 @@ RootedTree::RootedTree(const UnrootedTree& unrooted, RootingMethods rooting_meth
     RootingPoint rp;
 
     all_nodes.reserve(unrooted.all_nodes.size());
-
+    keys = unrooted.keys;
     // copy nodes
     for (const auto& n : unrooted.all_nodes) {
         all_nodes.push_back(std::make_unique<Node>(*n));
@@ -42,6 +42,8 @@ RootedTree::RootedTree(const UnrootedTree& unrooted, RootingMethods rooting_meth
     Node* root_start = all_nodes[rp.start_id].get();
     Node* root_end = all_nodes[rp.end_id].get();
 
+
+
     // Create new root node
     std::set<std::string> root_keys = root_start->keys;
     root_keys.insert(root_end->keys.begin(), root_end->keys.end());
@@ -53,22 +55,40 @@ RootedTree::RootedTree(const UnrootedTree& unrooted, RootingMethods rooting_meth
         root_start->children_bl_sum + root_end->children_bl_sum,
         0.0
     );
-
-    Node* new_root = new_root_ptr.get();
+    
+    all_nodes.push_back(std::move(new_root_ptr));
+    root = all_nodes.back().get();
 
     // Adjust branch lengths
     root_start->branch_length = rp.dist_from_start;
     root_end->branch_length = rp.dist_from_end;
 
-    root_start->father_id = new_root->id;
-    root_end->father_id = new_root->id;
+    root_start->father_id = root->id;
+    root_end->father_id = root->id;
+    
+	// Recalculate ranks and data for the affected subtree
+    root->set_rank_from_root(0);
+    std::vector<std::tuple<Node*, Node*, int>> nodes_to_recalc;
+	std::vector<Node*> raw_nodes = get_raw_pointers_from_unique(all_nodes);
 
-    // Store new node
-    all_nodes.push_back(std::move(new_root_ptr));
 
-    // Set root pointer
-    root = all_nodes.back().get();
-    keys = unrooted.keys;
+    nodes_to_recalc.push_back({ raw_nodes[rp.start_id], root, rp.end_id });
+    nodes_to_recalc.push_back({ raw_nodes[rp.end_id], root, rp.start_id });
+
+    while (!nodes_to_recalc.empty()) {
+        auto [node, father, broke] = nodes_to_recalc.back();
+        nodes_to_recalc.pop_back();
+        recalc_tree_down(node, father, broke, nodes_to_recalc, raw_nodes);
+    }
+
+    // Sort by rank and update data from children (highest rank first)
+    std::vector<Node*> sorted_by_rank = raw_nodes;
+    std::sort(sorted_by_rank.begin(), sorted_by_rank.end(),
+        [](const Node* a, const Node* b) { return a->rank_from_root > b->rank_from_root; });
+
+    for (auto* node : sorted_by_rank) {
+        node->update_data_from_children(raw_nodes);
+    }
 }
 
 void RootedTree::calc_clustal_w(std::vector<Node*> raw_nodes) {
@@ -274,45 +294,6 @@ void fill_nodes_w(Node* node, std::deque<Node*>& nodes_to_recalc, std::vector<No
     }
 }
 
-std::pair<Node*, std::vector<Node*>> create_root(std::vector<Node*>& all_nodes,
-                                                   const RootingPoint& rooting_point,
-                                                   std::vector<std::unique_ptr<Node>>& storage) {
-    int new_root_id = static_cast<int>(all_nodes.size());
-    int start_id = rooting_point.start_id;
-    int end_id = rooting_point.end_id;
-
-    auto new_root_ptr = std::make_unique<Node>(new_root_id, std::set<std::string>{},
-                                                std::vector<int>{start_id, end_id},
-                                                0.0);
-    Node* new_root = new_root_ptr.get();
-    new_root->set_rank_from_root(0);
-    storage.push_back(std::move(new_root_ptr));
-    all_nodes.push_back(new_root);
-
-    std::vector<std::tuple<Node*, Node*, int>> nodes_to_recalc;
-    nodes_to_recalc.push_back({all_nodes[start_id], new_root, end_id});
-    nodes_to_recalc.push_back({all_nodes[end_id], new_root, start_id});
-
-    while (!nodes_to_recalc.empty()) {
-        auto [node, father, broke] = nodes_to_recalc.back();
-        nodes_to_recalc.pop_back();
-        recalc_tree_down(node, father, broke, nodes_to_recalc, all_nodes);
-    }
-
-    all_nodes[start_id]->set_branch_length(rooting_point.dist_from_start);
-    all_nodes[end_id]->set_branch_length(rooting_point.dist_from_end);
-
-    // Sort by rank and update data from children (highest rank first)
-    std::vector<Node*> sorted_by_rank = all_nodes;
-    std::sort(sorted_by_rank.begin(), sorted_by_rank.end(),
-              [](const Node* a, const Node* b) { return a->rank_from_root > b->rank_from_root; });
-
-    for (auto* node : sorted_by_rank) {
-        node->update_data_from_children(all_nodes);
-    }
-
-    return {new_root, all_nodes};
-}
 
 RootingPoint RootedTree::find_shallowest_tree(
     const UnrootedTree& ut,

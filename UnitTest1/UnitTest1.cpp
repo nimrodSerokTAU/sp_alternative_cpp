@@ -18,6 +18,7 @@
 #include "../sp_alternative_cpp/include/tree_stats.h"
 #include "../sp_alternative_cpp/include/msa.h"
 #include "../sp_alternative_cpp/include/w_Sop_stats.h"
+#include "../sp_alternative_cpp/include/utils.h"
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std;
 
@@ -658,7 +659,7 @@ namespace spalternativeUnitTests
 
 		TEST_METHOD(tree_from_newick)
 		{
-			std::pair<Node*, std::vector<std::unique_ptr<Node>>> res = create_a_tree_from_newick(newick_of_AATF);
+			UnrootedTree ut = UnrootedTree(newick_of_AATF);
 			std::unordered_map<int, std::set<std::string>> expextedTaxaDict;
 			std::unordered_map<int, std::vector<int>> expextedChildrenIdsDict;
 
@@ -801,12 +802,14 @@ namespace spalternativeUnitTests
 				expextedChildrenIdsDict[leafIds[i]] = {};
 			}
 
-			Assert::AreEqual(expextedChildrenIdsDict.size(), res.second.size());
+			vector<Node*> raw_res = get_raw_pointers_from_unique(ut.all_nodes);
+
+			Assert::AreEqual(expextedChildrenIdsDict.size(), raw_res.size());
 			for (int i = 0; i < expextedChildrenIdsDict.size(); ++i)
 			{
 				std::set<int> childrenIds;
 
-				for (int child_id : res.second[i]->children_ids)
+				for (int child_id : raw_res[i]->children_ids)
 				{
 					childrenIds.insert(child_id);
 				}
@@ -820,7 +823,7 @@ namespace spalternativeUnitTests
 			}
 			for (int i = 0; i < expextedTaxaDict.size(); ++i)
 			{
-				Assert::IsTrue(expextedTaxaDict[i] == res.second[i]->keys);
+				Assert::IsTrue(expextedTaxaDict[i] == raw_res[i]->keys);
 			}
 		}
 
@@ -1037,6 +1040,30 @@ namespace spalternativeUnitTests
 			w_sop_ptr->calc_w_sp(msa_ptr->sequences, sp);
 			double henikoff_with_gaps = w_sop_ptr->sp_HENIKOFF_with_gaps;
 			double expected_value = -1.682110969387752;
+			Assert::IsTrue(abs(henikoff_with_gaps - expected_value) < 1e-10);
+		}
+
+		TEST_METHOD(clustalw_for_a_tree)
+		{
+			auto msa_ptr = make_unique<MSA>("test");
+			msa_ptr->add_sequence(string{ "AT-CGC" }, "a");
+			msa_ptr->add_sequence(string{ "ACATG-" }, "b");
+			msa_ptr->add_sequence(string{ "AT-CG-" }, "c");
+			msa_ptr->add_sequence(string{ "ATC-GA" }, "d");
+			msa_ptr->add_sequence(string{ "TTATGC" }, "e");
+
+			string newick = "(((a:1,b:2):3,c:4):5,d:6,e:7);";
+			EvoModel evoModel1(-10, -0.5, "Blosum62");
+			vector<EvoModel> models = { evoModel1 };
+			Configuration config(models, SopCalcTypes::EFFICIENT, "", "", "", { WeightMethods::CLUSTAL_MID_ROOT });
+
+			UnrootedTree ut = UnrootedTree(newick);
+			auto w_sop_ptr = make_unique<WSopStats>(msa_ptr->dataset_name, msa_ptr->get_taxa_num(), msa_ptr->get_msa_len());
+			w_sop_ptr->calc_seq_weights(config.additional_weights, msa_ptr->sequences, msa_ptr->seq_names, ut);
+			SPScore sp(evoModel1, blosum62Path);
+			w_sop_ptr->calc_w_sp(msa_ptr->sequences, sp);
+			double henikoff_with_gaps = w_sop_ptr->sp_CLUSTAL_WEIGHTS_mid_root;
+			double expected_value = -1267.7152777777774;
 			Assert::IsTrue(abs(henikoff_with_gaps - expected_value) < 1e-10);
 		}
 	};

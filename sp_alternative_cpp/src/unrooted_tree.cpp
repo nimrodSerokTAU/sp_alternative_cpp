@@ -201,14 +201,14 @@ Node* create_node_from_children(std::vector<std::vector<Node*>>& open_nodes_per_
     return current_node_ptr;
 }
 
-std::pair<Node*, std::vector<std::unique_ptr<Node>>> create_a_tree_from_newick(const std::string& newick)
+UnrootedTree::UnrootedTree(const std::string& newick)
 {
-    std::vector<std::unique_ptr<Node>> all_nodes;
-
+    //std::vector<std::unique_ptr<Node>> all_nodes;
     std::vector<std::vector<Node*>> open_nodes_per_level(100);
     int level = 0;
     std::string current_key;
     std::string branch_length_str;
+	anchor = nullptr;
 
     size_t i = 0;
     while (i < newick.size()) {
@@ -252,8 +252,9 @@ std::pair<Node*, std::vector<std::unique_ptr<Node>>> create_a_tree_from_newick(c
         }
         else if (c == ';') {
             double bl = branch_length_str.empty() ? 0.0 : std::stod(branch_length_str);
-            Node* root = create_node_from_children(open_nodes_per_level, 0, bl, static_cast<int>(all_nodes.size()), all_nodes);
-            return { root, std::move(all_nodes) };
+            anchor = create_node_from_children(open_nodes_per_level, 0, bl, static_cast<int>(all_nodes.size()), all_nodes);
+            keys = anchor->keys;
+            return;
         }
         else {
             current_key.clear();
@@ -261,6 +262,4 @@ std::pair<Node*, std::vector<std::unique_ptr<Node>>> create_a_tree_from_newick(c
                 current_key += newick[i++];
         }
     }
-
-    return { nullptr, std::move(all_nodes) };
 }
