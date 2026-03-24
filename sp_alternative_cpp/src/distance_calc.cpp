@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <numeric>
 #include <iterator>
+#include <unordered_map>
+#include <iostream>
 
 std::vector<std::string> translate_seq_h(const std::string& sequence, int seq_index, DistanceType distance_type) {
     std::vector<std::string> res;
@@ -135,6 +137,69 @@ double compute_distance(const std::vector<std::string>& profile_a, const std::ve
         return std::accumulate(d_list.begin(), d_list.end(), 0.0) / d_list.size();
     }
     return -1;
+}
+
+double compute_eff_d_seq(const std::vector<std::string>& profile_a, const std::vector<std::string>& profile_b) {
+    const int rows_num = profile_a.size();
+	const int cols_a_num = profile_a[0].size();
+	const int cols_b_num = profile_b[0].size();
+    vector<vector<int>> a_vectors(cols_a_num, std::vector<int>(rows_num));
+    vector<vector<int>> b_vectors(cols_b_num, std::vector<int>(rows_num));
+
+    vector<int> map_a;
+    vector<int> map_b;
+
+    fill_d_seq_vectors(profile_a, a_vectors, map_a, rows_num, cols_a_num);
+    fill_d_seq_vectors(profile_b, b_vectors, map_b, rows_num, cols_b_num);
+
+    std::vector<int> counts(cols_a_num * cols_b_num, 0);
+
+	int total_count = map_a.size();
+    for (int i = 0; i < total_count; i++) {
+        counts[map_a[i] * cols_b_num + map_b[i]]++;
+	}
+
+    double total_distance = 0;
+    for (int i = 0; i < cols_a_num; i++) {
+        for (int j = 0; j < cols_b_num; j++) {
+            if (counts[i * cols_b_num + j] > 0) {
+                int distance = vectors_distance(a_vectors[i], b_vectors[j]) ;
+                total_distance += distance * counts[i * cols_b_num + j];
+            }
+        }
+    }
+	return 1 - (total_distance / total_count / rows_num);
+}
+
+void fill_d_seq_vectors(const std::vector<std::string>& msa_a, vector<vector<int>>& vectors_list, vector<int>& v_map, int rows_num, int cols_num) {
+    for (int i = 0; i < rows_num; i++) {
+        int char_count = 0;
+        for (int j = 0; j < static_cast<int>(cols_num); j++) {
+            if (msa_a[i][j] == '-') {
+                vectors_list[j][i] = -1;
+            }
+            else {
+                char_count += 1;
+                vectors_list[j][i] = char_count;
+                v_map.push_back(j);
+            }
+        }
+    }
+}
+
+
+int vectors_distance(vector<int> a, vector<int> b) {
+    int res = 0;
+    for (int i = 0; i < a.size(); i++) {
+        if (a[i] != b[i]) {
+			res += 1;
+        }
+    }
+    return res;
+}
+
+string key_from_char_counts(int a, int b) {
+	return to_string(min(a, b)) + "_" + to_string(max(a, b));
 }
 
 double compute_distance_from_known_msa(const std::vector<std::string>& profile_a, const std::vector<std::vector<std::set<std::string>>> &profile_b_h, DistanceType distance_type) {

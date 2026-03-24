@@ -414,6 +414,12 @@ namespace spalternativeUnitTests
 			};
 			double res = compute_distance(profile1, profile2, DistanceType::D_POS);
 			Assert::AreEqual(res, 0.639, 0.001);
+
+			double d_seq = compute_distance(profile1, profile2, DistanceType::D_SEQ);
+			Assert::AreEqual(d_seq, 0.592593, 0.001);
+
+			double eff_d_seq = compute_eff_d_seq(profile1, profile2);
+			Assert::AreEqual(eff_d_seq, 0.592593, 0.001);
 		}
 
 		TEST_METHOD(dpos_for_diff_length_case_qu_a)

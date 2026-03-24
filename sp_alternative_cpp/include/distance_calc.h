@@ -14,4 +14,7 @@ std::vector<std::vector<std::set<std::string>>> create_h_table(const std::vector
 double compute_distance(const std::vector<std::string>& profile_a, const std::vector<std::string>& profile_b, DistanceType distance_type);
 double compute_distance_from_known_msa(const std::vector<std::string>& profile_a, const std::vector<std::vector<std::set<std::string>>> & profile_b_h, DistanceType distance_type);
 std::vector<std::vector<std::set<std::string>>> compute_msa_dist_h(const std::vector<std::string>& msa, DistanceType distance_type);
+double compute_eff_d_seq(const std::vector<std::string>& profile_a, const std::vector<std::string>& profile_b);
+void fill_d_seq_vectors(const std::vector<std::string>& msa_a, vector<vector<int>>& vectors_list, vector<int>& v_map, int rows_num, int cols_num);
+int vectors_distance(vector<int> a, vector<int> b);
 
