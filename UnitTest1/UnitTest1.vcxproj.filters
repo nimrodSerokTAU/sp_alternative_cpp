@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="test_data">
+      <UniqueIdentifier>{996e139a-6dd9-437e-8e70-ba99e2cfa360}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="UnitTest1.cpp">
@@ -26,5 +29,13 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="test_data\test_msa.fas">
+      <Filter>test_data</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="test_data\true_msa.fas">
+      <Filter>test_data</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>

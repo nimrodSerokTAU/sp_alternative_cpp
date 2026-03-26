@@ -416,10 +416,10 @@ namespace spalternativeUnitTests
 			Assert::AreEqual(res, 0.639, 0.001);
 
 			double d_seq = compute_distance(profile1, profile2, DistanceType::D_SEQ);
-			Assert::AreEqual(d_seq, 0.592593, 0.001);
+			Assert::AreEqual(d_seq, 0.611, 0.001);
 
 			double eff_d_seq = compute_eff_d_seq(profile1, profile2);
-			Assert::AreEqual(eff_d_seq, 0.592593, 0.001);
+			Assert::AreEqual(eff_d_seq, 0.611, 0.001);
 		}
 
 		TEST_METHOD(dpos_for_diff_length_case_qu_a)
@@ -471,7 +471,32 @@ namespace spalternativeUnitTests
 			double res_1_2 = compute_distance(profile1, profile2, DistanceType::D_SEQ);
 			double res_1_3 = compute_distance(profile1, profile3, DistanceType::D_SEQ);
 			Assert::AreEqual(res_1_2, 0.273, 0.001);
-			Assert::AreEqual(res_1_3, 0.265, 0.001);
+			Assert::AreEqual(res_1_3, 0.295, 0.001);
+			double ef_res_t_1 = compute_eff_d_seq(profile1, profile3);
+			Assert::AreEqual(res_1_3, 0.295, 0.001);
+		}
+
+		TEST_METHOD(dseq_for_diff_methods)
+		{
+			vector<string> profile1 = {
+				"GCATCATT--GT",
+				"GC---ATTA-GT",
+				"GC---AT-AGGT",
+				"G---CAT-AGGT"
+			};
+
+			vector<string> profile2 = {
+				"GCATCATT-G-T",
+				"GCA---TTAG-T",
+				"GCA----TAGGT",
+				"G---CAT-AGGT"
+			};
+
+
+			double res_1_2 = compute_distance(profile1, profile2, DistanceType::D_SEQ);
+			Assert::AreEqual(res_1_2, 0.294, 0.001);
+			double ef_res_t_1 = compute_eff_d_seq(profile1, profile2);
+			Assert::AreEqual(ef_res_t_1, 0.294, 0.001);
 		}
 
 		TEST_METHOD(dssp_for_diff_length_case_qu_a)
@@ -582,6 +607,8 @@ namespace spalternativeUnitTests
 			Assert::AreEqual(res_t_1, 0.091, 0.001);
 			Assert::AreEqual(res_t_2, 0.091, 0.001);
 			Assert::AreEqual(res_t_3, 0.091, 0.001);
+			double ef_res_t_1 = compute_eff_d_seq(trueProfile, profileA);
+			Assert::AreEqual(ef_res_t_1, 0.091, 0.001);
 		}
 
 		TEST_METHOD(dssp_for_diff_length_case_qu_b)
@@ -1072,5 +1099,24 @@ namespace spalternativeUnitTests
 			double expected_value = -1267.7152777777774;
 			Assert::IsTrue(abs(henikoff_with_gaps - expected_value) < 1e-10);
 		}
+
+		TEST_METHOD(calc_dseq_from_file)
+		{
+			string trueProfilePath = "true_msa.fas";
+			string profileAPath = "test_msa.fas";
+			
+			MSA true_msa("trueMSA");
+			true_msa.read_from_fasta(trueProfilePath);
+
+			MSA test_msa("testMSA");
+			test_msa.read_from_fasta(profileAPath);
+
+			double ef_res_t_1 = compute_eff_d_seq(true_msa.sequences, test_msa.sequences);
+			Assert::AreEqual(ef_res_t_1, 0.044, 0.001);
+			
+			double res_t_1 = compute_distance(true_msa.sequences, test_msa.sequences, DistanceType::D_SEQ);
+			Assert::AreEqual(res_t_1, 0.044, 0.001);
+		}
+
 	};
 }

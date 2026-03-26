@@ -16,7 +16,7 @@ std::vector<std::string> translate_seq_h(const std::string& sequence, int seq_in
             if (distance_type == DistanceType::D_POS) {
                 res.push_back("G^" + std::to_string(seq_index) + "_" + std::to_string(s_count - 1));
             } else if (distance_type == DistanceType::D_SEQ) {
-                res.push_back("G");
+                res.push_back("G^" + std::to_string(seq_index));
             } else { // D_SSP
                 res.push_back("-");
             }
@@ -155,26 +155,29 @@ double compute_eff_d_seq(const std::vector<std::string>& profile_a, const std::v
     std::vector<int> counts(cols_a_num * cols_b_num, 0);
 
 	int total_count = map_a.size();
-    for (int i = 0; i < total_count; i++) {
-        counts[map_a[i] * cols_b_num + map_b[i]]++;
+    for (int i = 0; i < total_count; ++i) {
+        if ((map_a[i] == 0 && map_b[i] == 0) || i == 188) {
+            int a = 1;
+        }
+        counts[map_a[i] * cols_b_num + map_b[i]] += 1;
 	}
 
     double total_distance = 0;
-    for (int i = 0; i < cols_a_num; i++) {
-        for (int j = 0; j < cols_b_num; j++) {
+    for (int i = 0; i < cols_a_num; ++i) {
+        for (int j = 0; j < cols_b_num; ++j) {
             if (counts[i * cols_b_num + j] > 0) {
-                int distance = vectors_distance(a_vectors[i], b_vectors[j]) ;
+                double distance = vectors_distance(a_vectors[i], b_vectors[j]) ;
                 total_distance += distance * counts[i * cols_b_num + j];
             }
         }
     }
-	return 1 - (total_distance / total_count / rows_num);
+	return total_distance / total_count;
 }
 
 void fill_d_seq_vectors(const std::vector<std::string>& msa_a, vector<vector<int>>& vectors_list, vector<int>& v_map, int rows_num, int cols_num) {
-    for (int i = 0; i < rows_num; i++) {
+    for (int i = 0; i < rows_num; ++i) {
         int char_count = 0;
-        for (int j = 0; j < static_cast<int>(cols_num); j++) {
+        for (int j = 0; j < static_cast<int>(cols_num); ++j) {
             if (msa_a[i][j] == '-') {
                 vectors_list[j][i] = -1;
             }
@@ -187,15 +190,14 @@ void fill_d_seq_vectors(const std::vector<std::string>& msa_a, vector<vector<int
     }
 }
 
-
-int vectors_distance(vector<int> a, vector<int> b) {
-    int res = 0;
-    for (int i = 0; i < a.size(); i++) {
+double vectors_distance(vector<int> a, vector<int> b) {
+    int intersection_count = 0;
+    for (int i = 0; i < a.size(); ++i) {
         if (a[i] != b[i]) {
-			res += 1;
+            intersection_count += 1;
         }
     }
-    return res;
+    return double(intersection_count) / (a.size() - 1);
 }
 
 string key_from_char_counts(int a, int b) {

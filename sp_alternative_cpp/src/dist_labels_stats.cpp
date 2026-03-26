@@ -7,12 +7,13 @@ DistanceLabelsStats::DistanceLabelsStats(const std::string& code, int taxa_num, 
       ssp_from_true(-1), dseq_from_true(-1), dpos_from_true(-1), rf_from_true(-1) {}
 
 void DistanceLabelsStats::set_my_distance_from_true(const std::vector<std::string>& inferred_msa,
-                                                    const std::vector<std::vector<std::set<std::string>>>& profile_b_h) {
+                                                    const std::vector<std::vector<std::set<std::string>>>& profile_b_h,
+                                                    const std::vector<std::string>& true_msa){
     //dpos_from_true = compute_distance(true_msa, inferred_msa, DistanceType::D_POS);
 
     dseq_from_true = compute_distance_from_known_msa(inferred_msa, profile_b_h, DistanceType::D_SEQ);
     //ssp_from_true = compute_distance(true_msa, inferred_msa, DistanceType::D_SSP);
-    dpos_from_true = 0.0;
+    dpos_from_true = compute_eff_d_seq(inferred_msa, true_msa);
     ssp_from_true = 0.0;
 
 }

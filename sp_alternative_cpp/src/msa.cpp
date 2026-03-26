@@ -47,12 +47,14 @@ void MSA::read_from_fasta(const std::filesystem::path& file_path) {
         }
         if (line.empty()) {
             if (!seq.empty()) {
+                seq.erase(seq.find_last_not_of(" ") + 1);
                 add_sequence(seq, seq_name);
             }
             return;
         }
         if (line[0] == '>') {
             if (!seq.empty()) {
+                seq.erase(seq.find_last_not_of(" ") + 1);
                 add_sequence(seq, seq_name);
                 seq.clear();
             }
@@ -63,6 +65,7 @@ void MSA::read_from_fasta(const std::filesystem::path& file_path) {
         }
     }
     if (!seq.empty()) {
+        seq.erase(seq.find_last_not_of(" ") + 1);
         add_sequence(seq, seq_name);
     }
 }
@@ -143,7 +146,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
     // Distance labels
     if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::DISTANCE_LABELS)) {
         auto start = std::chrono::steady_clock::now();
-        dist_labels_stats.set_my_distance_from_true(sequences, profile_b_h);
+        dist_labels_stats.set_my_distance_from_true(sequences, profile_b_h, true_msa.sequences);
         print_stats_file(dist_labels_stats.get_my_features_as_list(), output_dir_path,
                           stats_output_to_string(StatsOutput::DISTANCE_LABELS), is_init_file,
                           dist_labels_stats.get_ordered_col_names());
