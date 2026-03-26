@@ -10,11 +10,18 @@ void DistanceLabelsStats::set_my_distance_from_true(const std::vector<std::strin
                                                     const std::vector<std::vector<std::set<std::string>>>& profile_b_h,
                                                     const std::vector<std::string>& true_msa){
     //dpos_from_true = compute_distance(true_msa, inferred_msa, DistanceType::D_POS);
-
-    dseq_from_true = compute_distance_from_known_msa(inferred_msa, profile_b_h, DistanceType::D_SEQ);
     //ssp_from_true = compute_distance(true_msa, inferred_msa, DistanceType::D_SSP);
-    dpos_from_true = compute_eff_d_seq(inferred_msa, true_msa);
+    dpos_from_true = 0.0;
     ssp_from_true = 0.0;
+	const int rows_num = true_msa.size();
+	const int cols_num = true_msa[0].size();
+    vector<vector<int>> true_msa_vectors(cols_num, std::vector<int>(rows_num));
+    vector<int> true_msa_map;
+    fill_d_seq_vectors(true_msa, true_msa_vectors, true_msa_map, rows_num, cols_num);
+
+    dseq_from_true = compute_eff_d_seq_from_true(inferred_msa, true_msa_vectors, true_msa_map);
+	//dseq_from_true = compute_distance_from_known_msa(inferred_msa, profile_b_h, DistanceType::D_SEQ);  // older version of dseq_from_true, to compare with the efficient version
+ //   dseq_from_true = compute_eff_d_seq(inferred_msa, true_msa); // older version of dseq_from_true, to compare with the efficient version
 
 }
 

@@ -253,3 +253,33 @@ std::vector<std::vector<std::set<std::string>>> compute_msa_dist_h(const std::ve
 	return create_h_table(profile_naming, distance_type);
 }
 
+double compute_eff_d_seq_from_true(const std::vector<std::string>& msa, const vector<vector<int>>& true_msa_vectors, const vector<int>& true_map) {
+    const int rows_num = msa.size();
+    const int cols_num = msa[0].size();
+    vector<vector<int>> msa_vectors(cols_num, std::vector<int>(rows_num));
+    vector<int> msa_map;
+
+    fill_d_seq_vectors(msa, msa_vectors, msa_map, rows_num, cols_num);
+	int true_msa_cols_num = true_msa_vectors.size();
+    std::vector<int> counts(cols_num * true_msa_cols_num, 0);
+
+    int total_count = msa_map.size();
+    for (int i = 0; i < total_count; ++i) {
+        if ((msa_map[i] == 0 && true_map[i] == 0) || i == 188) {
+            int a = 1;
+        }
+        counts[msa_map[i] * true_msa_cols_num + true_map[i]] += 1;
+    }
+
+    double total_distance = 0;
+    for (int i = 0; i < cols_num; ++i) {
+        for (int j = 0; j < true_msa_cols_num; ++j) {
+            if (counts[i * true_msa_cols_num + j] > 0) {
+                double distance = vectors_distance(msa_vectors[i], true_msa_vectors[j]);
+                total_distance += distance * counts[i * true_msa_cols_num + j];
+            }
+        }
+    }
+    return total_distance / total_count;
+}
+

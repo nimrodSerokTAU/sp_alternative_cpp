@@ -17,4 +17,5 @@ std::vector<std::vector<std::set<std::string>>> compute_msa_dist_h(const std::ve
 double compute_eff_d_seq(const std::vector<std::string>& profile_a, const std::vector<std::string>& profile_b);
 void fill_d_seq_vectors(const std::vector<std::string>& msa_a, vector<vector<int>>& vectors_list, vector<int>& v_map, int rows_num, int cols_num);
 double vectors_distance(vector<int> a, vector<int> b);
+double compute_eff_d_seq_from_true(const std::vector<std::string>& msa, const vector<vector<int>>& true_msa_vectors, const vector<int>& true_map);
 
