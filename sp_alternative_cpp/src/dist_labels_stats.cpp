@@ -1,5 +1,6 @@
 #include "dist_labels_stats.h"
 #include "distance_calc.h"
+#include <iostream>
 
 DistanceLabelsStats::DistanceLabelsStats(const std::string& code, int taxa_num, int msa_length)
     : BasicStats(code, taxa_num, msa_length,
@@ -7,7 +8,6 @@ DistanceLabelsStats::DistanceLabelsStats(const std::string& code, int taxa_num, 
       ssp_from_true(-1), dseq_from_true(-1), dpos_from_true(-1), rf_from_true(-1) {}
 
 void DistanceLabelsStats::set_my_distance_from_true(const std::vector<std::string>& inferred_msa,
-                                                    const std::vector<std::vector<std::set<std::string>>>& profile_b_h,
                                                     const std::vector<std::string>& true_msa){
     //dpos_from_true = compute_distance(true_msa, inferred_msa, DistanceType::D_POS);
     //ssp_from_true = compute_distance(true_msa, inferred_msa, DistanceType::D_SSP);
@@ -16,8 +16,10 @@ void DistanceLabelsStats::set_my_distance_from_true(const std::vector<std::strin
 	const int rows_num = true_msa.size();
 	const int cols_num = true_msa[0].size();
     vector<vector<int>> true_msa_vectors(cols_num, std::vector<int>(rows_num));
-    vector<int> true_msa_map;
+    vector<long> true_msa_map;
+    cout << "Filling true vector and map..." << endl;
     fill_d_seq_vectors(true_msa, true_msa_vectors, true_msa_map, rows_num, cols_num);
+    cout << "End filling true vector and map..." << endl;
 
     dseq_from_true = compute_eff_d_seq_from_true(inferred_msa, true_msa_vectors, true_msa_map);
 	//dseq_from_true = compute_distance_from_known_msa(inferred_msa, profile_b_h, DistanceType::D_SEQ);  // older version of dseq_from_true, to compare with the efficient version

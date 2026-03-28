@@ -2,6 +2,7 @@
 #include <limits>
 #include <numeric>
 #include <algorithm>
+#include <iostream>
 
 using namespace std;
 
@@ -28,10 +29,10 @@ NeighborJoining::NeighborJoining(
 }
 
 std::vector<std::vector<double>> NeighborJoining::calc_q_matrix() const {
-    int n = static_cast<int>(working_nodes.size());
-    std::vector<std::vector<double>> qm(distance_matrix.size() - 1, std::vector<double>(n, 0.0));
+    int n = working_nodes.size();
+    vector<vector<double>> qm(distance_matrix.size() - 1, std::vector<double>(n, 0.0));
 
-    for (int i = 0; i < static_cast<int>(distance_matrix.size()) - 1; i++) {
+    for (int i = 0; i < distance_matrix.size() - 1; i++) {
         double sum_i = std::accumulate(distance_matrix[i].begin(), distance_matrix[i].end(), 0.0);
         for (int j = i + 1; j < static_cast<int>(distance_matrix.size()); j++) {
             double sum_j = std::accumulate(distance_matrix[j].begin(), distance_matrix[j].end(), 0.0);
@@ -153,7 +154,9 @@ Node* NeighborJoining::merge_last_three() {
 
 UnrootedTree NeighborJoining::build_tree() {
     while (working_nodes.size() > 3) {
+		cout << "Merging clusters, remaining count: " << working_nodes.size() << endl;
         q_matrix = calc_q_matrix();
+		cout << "Finding closest pair..." << endl;
         merge_two_clusters();
     }
     q_matrix = calc_q_matrix();

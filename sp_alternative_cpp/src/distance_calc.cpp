@@ -41,7 +41,7 @@ std::vector<std::string> get_column(const std::vector<std::vector<std::string>>&
     return res;
 }
 
-std::optional<std::set<std::string>> get_place_h(const std::vector<std::string>& column, int seq_index) {
+optional<std::set<std::string>> get_place_h(const std::vector<std::string>& column, int seq_index) {
     std::vector<std::string> col = column;
     std::string self_item = col[seq_index];
     col.erase(col.begin() + seq_index);
@@ -146,8 +146,8 @@ double compute_eff_d_seq(const std::vector<std::string>& profile_a, const std::v
     vector<vector<int>> a_vectors(cols_a_num, std::vector<int>(rows_num));
     vector<vector<int>> b_vectors(cols_b_num, std::vector<int>(rows_num));
 
-    vector<int> map_a;
-    vector<int> map_b;
+    vector<long> map_a;
+    vector<long> map_b;
 
     fill_d_seq_vectors(profile_a, a_vectors, map_a, rows_num, cols_a_num);
     fill_d_seq_vectors(profile_b, b_vectors, map_b, rows_num, cols_b_num);
@@ -174,10 +174,10 @@ double compute_eff_d_seq(const std::vector<std::string>& profile_a, const std::v
 	return total_distance / total_count;
 }
 
-void fill_d_seq_vectors(const std::vector<std::string>& msa_a, vector<vector<int>>& vectors_list, vector<int>& v_map, int rows_num, int cols_num) {
+void fill_d_seq_vectors(const vector<string>& msa_a, vector<vector<int>>& vectors_list, vector<long>& v_map, int rows_num, int cols_num) {
     for (int i = 0; i < rows_num; ++i) {
         int char_count = 0;
-        for (int j = 0; j < static_cast<int>(cols_num); ++j) {
+        for (int j = 0; j < cols_num; ++j) {
             if (msa_a[i][j] == '-') {
                 vectors_list[j][i] = -1;
             }
@@ -190,7 +190,7 @@ void fill_d_seq_vectors(const std::vector<std::string>& msa_a, vector<vector<int
     }
 }
 
-double vectors_distance(vector<int> a, vector<int> b) {
+double vectors_distance(const vector<int>& a, const vector<int>& b) {
     int intersection_count = 0;
     for (int i = 0; i < a.size(); ++i) {
         if (a[i] != b[i]) {
@@ -253,26 +253,28 @@ std::vector<std::vector<std::set<std::string>>> compute_msa_dist_h(const std::ve
 	return create_h_table(profile_naming, distance_type);
 }
 
-double compute_eff_d_seq_from_true(const std::vector<std::string>& msa, const vector<vector<int>>& true_msa_vectors, const vector<int>& true_map) {
+double compute_eff_d_seq_from_true(const std::vector<std::string>& msa, const vector<vector<int>>& true_msa_vectors, const vector<long>& true_map) {
     const int rows_num = msa.size();
     const int cols_num = msa[0].size();
     vector<vector<int>> msa_vectors(cols_num, std::vector<int>(rows_num));
-    vector<int> msa_map;
+    vector<long> msa_map;
 
+    cout << "Filling msa vectors for efficient d_seq calculation..." << endl;
     fill_d_seq_vectors(msa, msa_vectors, msa_map, rows_num, cols_num);
+    cout << "End filling msa vectors for efficient d_seq calculation..." << endl;
 	int true_msa_cols_num = true_msa_vectors.size();
-    std::vector<int> counts(cols_num * true_msa_cols_num, 0);
+    std::vector<long> counts(cols_num * true_msa_cols_num, 0);
 
+    cout << "Filling total count..." << endl;
     int total_count = msa_map.size();
     for (int i = 0; i < total_count; ++i) {
-        if ((msa_map[i] == 0 && true_map[i] == 0) || i == 188) {
-            int a = 1;
-        }
         counts[msa_map[i] * true_msa_cols_num + true_map[i]] += 1;
     }
+    cout << "End filling total count..." << endl;
 
     double total_distance = 0;
     for (int i = 0; i < cols_num; ++i) {
+        cout << "processing column..." << i<< endl;
         for (int j = 0; j < true_msa_cols_num; ++j) {
             if (counts[i * true_msa_cols_num + j] > 0) {
                 double distance = vectors_distance(msa_vectors[i], true_msa_vectors[j]);

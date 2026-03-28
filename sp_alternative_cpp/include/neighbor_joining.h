@@ -3,6 +3,8 @@
 #include "unrooted_tree.h"
 #include <vector>
 #include <memory>
+#include <optional>
+
 
 class NeighborJoining {
 public:

@@ -56,6 +56,7 @@ int main()
     cout << "Input directory: " << configuration.input_files_dir_path << endl;
 
     try {
+        cout << "Entering multiple msa calc: " << endl;
         multiple_msa_calc_features_and_labels(configuration);
     }
     catch (const exception& e) {

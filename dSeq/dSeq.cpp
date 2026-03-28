@@ -3,13 +3,33 @@
 #include <fstream>
 #include <string>
 #include <filesystem>
-#include "../sp_alternative_cpp/include/multi_msa_service.h"
 #include "../sp_alternative_cpp/include/msa.h"
-#include "../sp_alternative_cpp/include/dist_labels_stats.h"
 #include "../sp_alternative_cpp/include/distance_calc.h"
 using namespace std;
 namespace fs = std::filesystem;
 
+
+struct FileNames {
+    std::string true_file_name;
+    std::string true_tree_file_name;
+    std::vector<std::string> other_file_names;
+};
+
+FileNames get_file_names_ordered(const std::vector<std::string>& file_names) {
+    FileNames result;
+    for (const auto& fn : file_names) {
+        if (fn.find("_TRUE.") != std::string::npos) {
+            result.true_file_name = fn;
+        }
+        else if (fn.find("_true_tree.") != std::string::npos) {
+            result.true_tree_file_name = fn;
+        }
+        else {
+            result.other_file_names.push_back(fn);
+        }
+    }
+    return result;
+}
 
 void multiple_msa_calc_features_and_labels(string directoryName, string outputDirectory) {
 

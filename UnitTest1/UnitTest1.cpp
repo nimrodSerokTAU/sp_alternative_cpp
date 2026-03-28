@@ -15,6 +15,7 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <optional>
 #include "../sp_alternative_cpp/include/tree_stats.h"
 #include "../sp_alternative_cpp/include/msa.h"
 #include "../sp_alternative_cpp/include/w_Sop_stats.h"

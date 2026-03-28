@@ -97,6 +97,7 @@ void MSA::build_nj_tree() {
 
     std::vector<Node*> raw_nodes = get_raw_pointers_from_unique(nodes);
 
+	cout << "Calculating distance matrix for NJ tree construction..." << endl;
     for (int i = 0; i < n; i++) {
         auto node = std::make_unique<Node>(i, std::set<std::string>{seq_names[i]}, std::vector<int>{}, 0.0);
         node->fill_newick(raw_nodes);
@@ -107,6 +108,7 @@ void MSA::build_nj_tree() {
             distance_matrix[j][i] = kd;
         }
     }
+    cout << "End calculating distance matrix for NJ tree construction..." << endl;
 
     NeighborJoining nj(distance_matrix, std::move(nodes));
 
@@ -132,8 +134,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
                                  const std::vector<SPScore>& sp_models,
                                  const std::filesystem::path& output_dir_path,
                                  const UnrootedTree* true_tree,
-                                 bool is_init_file,
-                                 const std::vector<std::vector<std::set<std::string>>>& profile_b_h) {
+                                 bool is_init_file) {
     // Basic stats
     {
         std::vector<std::string> basic_cols = {"code", "taxa_num", "msa_length"};
@@ -146,7 +147,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
     // Distance labels
     if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::DISTANCE_LABELS)) {
         auto start = std::chrono::steady_clock::now();
-        dist_labels_stats.set_my_distance_from_true(sequences, profile_b_h, true_msa.sequences);
+        dist_labels_stats.set_my_distance_from_true(sequences, true_msa.sequences);
         print_stats_file(dist_labels_stats.get_my_features_as_list(), output_dir_path,
                           stats_output_to_string(StatsOutput::DISTANCE_LABELS), is_init_file,
                           dist_labels_stats.get_ordered_col_names());
@@ -207,14 +208,6 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
                           stats_output_to_string(StatsOutput::TREE), is_init_file,
                           tree_stats.get_ordered_col_names());
 
-        //if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::RF_LABEL)) {
-        //    if (true_tree) {
-        //        dist_labels_stats.set_rf_from_true(*tree, *true_tree);
-        //        auto [rf_data, rf_cols] = dist_labels_stats.get_print_rf();
-        //        print_stats_file(rf_data, output_dir_path,
-        //                          stats_output_to_string(StatsOutput::RF_LABEL), is_init_file, rf_cols);
-        //    }
-        //}
         auto end = std::chrono::steady_clock::now();
         std::cout << "Elapsed time for Tree: "
                   << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;

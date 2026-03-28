@@ -9,7 +9,7 @@
 #include <chrono>
 #include <vector>
 #include <string>
-#include <distance_calc.h>
+#include "distance_calc.h"
 
 namespace fs = std::filesystem;
 
@@ -46,6 +46,7 @@ void multiple_msa_calc_features_and_labels(const Configuration& config) {
         matrix_path.replace_extension(".txt");
         sp_models.emplace_back(m, matrix_path);
     }
+    cout << "End subs matrices: " << endl;
 
     fs::path output_dir_path = fs::path(config.output_file_dir_path);
     fs::create_directories(output_dir_path);
@@ -64,12 +65,12 @@ void multiple_msa_calc_features_and_labels(const Configuration& config) {
         }
 
         auto ordered = get_file_names_ordered(files);
-
+        cout << "Starting to work on an msa: " << endl;
         MSA true_msa(dir_name);
         if (!ordered.true_file_name.empty()) {
             true_msa.read_from_fasta(dir_path / ordered.true_file_name);
         }
-        std::vector<std::vector<std::set<std::string>>> true_msa_dist_h = compute_msa_dist_h(true_msa.sequences, DistanceType::D_SEQ);
+        //std::vector<std::vector<std::set<std::string>>> true_msa_dist_h = compute_msa_dist_h(true_msa.sequences, DistanceType::D_SEQ);
 
 
         bool is_init_files = true;
@@ -81,13 +82,13 @@ void multiple_msa_calc_features_and_labels(const Configuration& config) {
             inferred_msa.read_from_fasta(dir_path / inferred_file_name);
             inferred_msa.order_sequences(true_msa.seq_names);
             inferred_msa.calc_and_print_stats(true_msa, config, sp_models, output_dir_path,
-                                               true_msa.tree.get(), is_init_files, true_msa_dist_h);
+                                               true_msa.tree.get(), is_init_files);
             is_init_files = false;
         }
 
         // Also process the true MSA
         true_msa.calc_and_print_stats(true_msa, config, sp_models, output_dir_path,
-                                       true_msa.tree.get(), is_init_files, true_msa_dist_h);
+                                       true_msa.tree.get(), is_init_files);
     }
 
     auto end = std::chrono::steady_clock::now();
