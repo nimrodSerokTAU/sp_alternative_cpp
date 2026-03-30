@@ -12,6 +12,13 @@ NeighborJoining::NeighborJoining(
 {
     distance_matrix = distanceMatrix;
 
+    for (int i = 0; i < distanceMatrix.size(); ++i) {
+        for (int j = 0; j < distanceMatrix[0].size(); ++j) {
+            cout << distanceMatrix[i][j] << " ";
+        }
+        cout << endl;
+    }
+
     // move ownership of nodes
     all_nodes = std::move(initial_nodes);
 
@@ -28,15 +35,18 @@ NeighborJoining::NeighborJoining(
     tree_res = build_tree();
 }
 
-std::vector<std::vector<double>> NeighborJoining::calc_q_matrix() const {
+vector<vector<double>> NeighborJoining::calc_q_matrix() const {
     int n = working_nodes.size();
-    vector<vector<double>> qm(distance_matrix.size() - 1, std::vector<double>(n, 0.0));
+    vector<vector<double>> qm(distance_matrix.size() - 1, vector<double>(n, 0.0));
+    
+	vector<double> row_sums(distance_matrix.size(), 0.0);
+    for (int i = 0; i < distance_matrix.size(); i++) {
+        row_sums[i] = accumulate(distance_matrix[i].begin(), distance_matrix[i].end(), 0.0);
+    }
 
     for (int i = 0; i < distance_matrix.size() - 1; i++) {
-        double sum_i = std::accumulate(distance_matrix[i].begin(), distance_matrix[i].end(), 0.0);
         for (int j = i + 1; j < static_cast<int>(distance_matrix.size()); j++) {
-            double sum_j = std::accumulate(distance_matrix[j].begin(), distance_matrix[j].end(), 0.0);
-            qm[i][j] = (n - 2) * distance_matrix[i][j] - sum_i - sum_j;
+            qm[i][j] = (n - 2) * distance_matrix[i][j] - row_sums[i] - row_sums[j];
         }
     }
     return qm;
@@ -163,3 +173,4 @@ UnrootedTree NeighborJoining::build_tree() {
     Node* root = merge_last_three();
     return UnrootedTree(root, std::move(all_nodes));
 }
+

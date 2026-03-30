@@ -1,9 +1,12 @@
-#include "unrooted_tree.h"
 #include <fstream>
 #include <algorithm>
 #include <queue>
 #include <stdexcept>
+#include <iostream>
 #include "utils.h"
+#include "unrooted_tree.h"
+using namespace std;
+
 
 UnrootedTree::UnrootedTree(Node* _anchor, const std::vector<std::unique_ptr<Node>>& _all_nodes) {
     // Deep copy unique_ptrs
@@ -262,4 +265,44 @@ UnrootedTree::UnrootedTree(const std::string& newick)
                 current_key += newick[i++];
         }
     }
+}
+
+string UnrootedTree::print_newick() const {
+	string newick_str = get_newick(anchor) + ";";
+    cout << newick_str << std::endl;
+	return newick_str;
+
+
+    //std::vector<Node*> raw_nodes = get_raw_pointers_from_unique(all_nodes);
+    //anchor->fill_newick(raw_nodes);
+    //out << anchor->newick_part << ";" << std::endl;
+}
+
+string UnrootedTree::get_newick(Node* node) const {
+    string newick_str;
+    if (node->children_ids.size() == 0) {
+        newick_str = *node->keys.begin();
+        newick_str += ":";
+    }
+    else {
+		newick_str = "(";
+        vector<string> strings;
+        for (int i = 0; i < node->children_ids.size(); ++i) {
+            int child_id = node->children_ids[i];
+            Node* c = all_nodes[child_id].get();
+            strings.push_back(get_newick(c));
+        }
+        sort(strings.begin(), strings.end());
+        for (int i = 0; i < strings.size(); ++i) {
+            newick_str += strings[i];
+            if (i < strings.size() - 1) {
+                newick_str += ",";
+            }
+            else {
+                newick_str += "):";
+            }
+        }
+    }
+    newick_str += to_string(node->branch_length);
+    return newick_str;
 }

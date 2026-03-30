@@ -6,6 +6,7 @@
 #include <memory>
 #include <tuple>
 #include <filesystem>
+using namespace std;
 
 struct PathEntry {
     int start_id;
@@ -35,6 +36,8 @@ public:
     std::tuple<Node*, std::vector<PathEntry>, double> get_longest_path(Node* u) const;
     std::pair<std::vector<PathEntry>, double> longest_path() const;
     double get_longest_dist_to(Node* dest) const;
+    string print_newick() const;
+    string get_newick(Node* node) const;
 };
 
 // Free functions for Newick parsing

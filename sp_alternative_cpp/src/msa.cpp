@@ -112,9 +112,11 @@ void MSA::build_nj_tree() {
 
     NeighborJoining nj(distance_matrix, std::move(nodes));
 
+   
     // Access the calculated tree (tree_res is std::optional)
     if (nj.tree_res.has_value()) {
         tree = std::make_unique<UnrootedTree>(std::move(nj.tree_res.value()));
+        tree->print_newick();
     }
 }
 

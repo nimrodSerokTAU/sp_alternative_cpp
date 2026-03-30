@@ -57,7 +57,7 @@ void multiple_msa_calc_features_and_labels(string directoryName, string outputDi
     const int rows_num = true_msa.sequences.size();
     const int cols_num = true_msa.sequences[0].size();
     vector<vector<int>> true_msa_vectors(cols_num, std::vector<int>(rows_num));
-    vector<int> true_msa_map;
+    vector<long> true_msa_map;
     fill_d_seq_vectors(true_msa.sequences, true_msa_vectors, true_msa_map, rows_num, cols_num);
 
 	vector<double> dseq_vectors(ordered.other_file_names.size());

@@ -932,6 +932,47 @@ namespace spalternativeUnitTests
 			{
 				Assert::IsTrue(fabs(expected_bl_list[i] - bl_list[i]) < EPS);
 			}
+			string newick_str = tree.print_newick();
+			Assert::AreEqual(newick_str.c_str(), "(((a:2.000000,b:3.000000):3.000000,c:4.000000):2.000000,d:2.000000,e:1.000000):0.000000;");
+		}
+
+		TEST_METHOD(neighbor_joining_case_b)
+		{
+			// Distance matrix
+			vector<vector<double>> matrix_case_nj = {
+				{0.000, 0.385, 0.385, 0.385, 0.692, 0.615, 0.769, 0.538, 0.615},
+				{0.385, 0.000, 0.231, 0.000, 0.538, 0.462, 0.692, 0.385, 0.538},
+				{0.385, 0.231, 0.000, 0.231, 0.308, 0.231, 0.538, 0.231, 0.308},
+				{0.385, 0.000, 0.231, 0.000, 0.538, 0.462, 0.692, 0.385, 0.538},
+				{0.692, 0.538, 0.308, 0.538, 0.000, 0.385, 0.231, 0.462, 0.462},
+				{0.615, 0.462, 0.231, 0.462, 0.385, 0.000, 0.615, 0.385, 0.077},
+				{0.769, 0.692, 0.538, 0.692, 0.231, 0.615, 0.000, 0.462, 0.615},
+				{0.538, 0.385, 0.231, 0.385, 0.462, 0.385, 0.462, 0.000, 0.462},
+				{0.615, 0.538, 0.308, 0.538, 0.462, 0.077, 0.615, 0.462, 0.000}
+			};
+
+			vector<string> keys_case_nj = { "rayfinfish", "frog", "turtle", "salamander", "crocodile", "lizard", "bird", "mammal", "snake"};
+
+			vector<unique_ptr<Node>> nodesP;
+			for (size_t i = 0; i < keys_case_nj.size(); ++i)
+			{
+				set<string> thisKeySet = { keys_case_nj[i] };
+				vector<int> children_ids = {}; // leaf node
+				auto new_node = make_unique<Node>(
+					static_cast<int>(i),
+					thisKeySet,
+					children_ids,
+					1.0,
+					0.0
+				);
+
+				nodesP.push_back(std::move(new_node));
+			}
+
+			NeighborJoining neighborJoining(matrix_case_nj, std::move(nodesP));
+			auto& tree = neighborJoining.tree_res.value();
+			string newick_str = tree.print_newick();
+			Assert::AreEqual(newick_str.c_str(), "(((((frog:0.000000,salamander:0.000000):0.125313,rayfinfish:0.259687):0.089542,turtle:0.025958):0.038094,mammal:0.154156):0.028969,(bird:0.186786,crocodile:0.044214):0.187344,(lizard:0.009792,snake:0.067208):0.177906):0.000000;");
 		}
 
 		TEST_METHOD(parsimony)
