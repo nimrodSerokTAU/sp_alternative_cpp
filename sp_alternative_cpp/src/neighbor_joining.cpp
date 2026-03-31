@@ -12,12 +12,12 @@ NeighborJoining::NeighborJoining(
 {
     distance_matrix = distanceMatrix;
 
-    for (int i = 0; i < distanceMatrix.size(); ++i) {
-        for (int j = 0; j < distanceMatrix[0].size(); ++j) {
-            cout << distanceMatrix[i][j] << " ";
-        }
-        cout << endl;
-    }
+    //for (int i = 0; i < distanceMatrix.size(); ++i) {
+    //    for (int j = 0; j < distanceMatrix[0].size(); ++j) {
+    //        //cout << distanceMatrix[i][j] << " ";
+    //    }
+    //    //cout << endl;
+    //}
 
     // move ownership of nodes
     all_nodes = std::move(initial_nodes);
@@ -166,7 +166,7 @@ UnrootedTree NeighborJoining::build_tree() {
     while (working_nodes.size() > 3) {
 		cout << "Merging clusters, remaining count: " << working_nodes.size() << endl;
         q_matrix = calc_q_matrix();
-		cout << "Finding closest pair..." << endl;
+		//cout << "Finding closest pair..." << endl;
         merge_two_clusters();
     }
     q_matrix = calc_q_matrix();

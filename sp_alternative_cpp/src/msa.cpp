@@ -220,7 +220,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
         auto start = std::chrono::steady_clock::now();
         for (const auto& sp : sp_models) {
             SopStats sop_stats(dataset_name, get_taxa_num(), get_msa_len());
-            sop_stats.set_my_sop_score_parts(sp, sequences);
+            sop_stats.set_my_sop_score_parts(sp, sequences, config.is_using_substitutions_matrix);
             print_stats_file(sop_stats.get_my_features_as_list(), output_dir_path,
                               stats_output_to_string(StatsOutput::SP), is_init_file,
                               sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost),

@@ -259,22 +259,22 @@ double compute_eff_d_seq_from_true(const std::vector<std::string>& msa, const ve
     vector<vector<int>> msa_vectors(cols_num, std::vector<int>(rows_num));
     vector<long> msa_map;
 
-    cout << "Filling msa vectors for efficient d_seq calculation..." << endl;
+    cout << "computing d_seq..." << endl;
     fill_d_seq_vectors(msa, msa_vectors, msa_map, rows_num, cols_num);
-    cout << "End filling msa vectors for efficient d_seq calculation..." << endl;
+    //cout << "End filling msa vectors for efficient d_seq calculation..." << endl;
 	int true_msa_cols_num = true_msa_vectors.size();
     std::vector<long> counts(cols_num * true_msa_cols_num, 0);
 
-    cout << "Filling total count..." << endl;
+    //cout << "Filling total count..." << endl;
     int total_count = msa_map.size();
     for (int i = 0; i < total_count; ++i) {
         counts[msa_map[i] * true_msa_cols_num + true_map[i]] += 1;
     }
-    cout << "End filling total count..." << endl;
+    //cout << "End filling total count..." << endl;
 
     double total_distance = 0;
     for (int i = 0; i < cols_num; ++i) {
-        cout << "processing column..." << i<< endl;
+        //cout << "processing column..." << i<< endl;
         for (int j = 0; j < true_msa_cols_num; ++j) {
             if (counts[i * true_msa_cols_num + j] > 0) {
                 double distance = vectors_distance(msa_vectors[i], true_msa_vectors[j]);

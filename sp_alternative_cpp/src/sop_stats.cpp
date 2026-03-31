@@ -16,8 +16,8 @@ SopStats::SopStats(const std::string& code, int taxa_num, int msa_length)
                                 "sp_mismatch_count_norm", "sp_go", "sp_go_norm", "sp_ge", "sp_ge_norm"},
       gaps_agnostic_col_names{"sp_match", "sp_match_norm", "sp_mismatch", "sp_mismatch_norm"} {}
 
-void SopStats::set_my_sop_score_parts(const SPScore& sp_score, const std::vector<std::string>& sequences) {
-    auto parts = sp_score.compute_efficient_sp_parts(sequences);
+void SopStats::set_my_sop_score_parts(const SPScore& sp_score, const std::vector<std::string>& sequences, bool is_using_substitutions_matrix) {
+    auto parts = sp_score.compute_efficient_sp_parts(sequences, is_using_substitutions_matrix);
     double number_of_pairs_with_msa_length = taxa_num * (taxa_num - 1) / 2.0 * msa_length;
 
     sp_match_count = parts.sp_match_count;

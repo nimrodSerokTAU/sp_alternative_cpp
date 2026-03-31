@@ -1,4 +1,3 @@
-#include "rooted_tree.h"
 #include <algorithm>
 #include <cmath>
 #include <deque>
@@ -8,7 +7,13 @@
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
+#include <iostream>
+
 #include "utils.h"
+#include "rooted_tree.h"
+
+using namespace std;
+
 
 RootedTree::RootedTree(Node* r,
     std::vector<std::unique_ptr<Node>> nodes,
@@ -20,8 +25,7 @@ RootedTree::RootedTree(Node* r,
 }
 
 
-RootedTree::RootedTree(const UnrootedTree& unrooted, RootingMethods rooting_method) {
-    RootingPoint rp;
+RootedTree::RootedTree(const UnrootedTree& unrooted, RootingPoint rp) {
 
     all_nodes.reserve(unrooted.all_nodes.size());
     keys = unrooted.keys;
@@ -30,64 +34,55 @@ RootedTree::RootedTree(const UnrootedTree& unrooted, RootingMethods rooting_meth
         all_nodes.push_back(std::make_unique<Node>(*n));
     }
 
-    // Find midpoint rooting location
-    if (rooting_method == RootingMethods::LONGEST_PATH_MID) {
-        rp = calc_mid_point(unrooted);
-    }
-    else {
-        auto rooting_points = calc_min_differential_sum(unrooted);
-        rp = find_shallowest_tree(unrooted, rooting_points);
-    }
-
-    Node* root_start = all_nodes[rp.start_id].get();
-    Node* root_end = all_nodes[rp.end_id].get();
-
-
+    Node* start = all_nodes[rp.start_id].get();
+    Node* end = all_nodes[rp.end_id].get();
 
     // Create new root node
-    std::set<std::string> root_keys = root_start->keys;
-    root_keys.insert(root_end->keys.begin(), root_end->keys.end());
+    std::set<std::string> root_keys = unrooted.anchor->keys;
 
     auto new_root_ptr = std::make_unique<Node>(
         static_cast<int>(all_nodes.size()),
-        root_keys,
-        std::vector<int>{root_start->id, root_end->id},
-        root_start->children_bl_sum + root_end->children_bl_sum,
-        0.0
-    );
+        root_keys, std::vector<int>{start->id, end->id}, 0.0, 0.0);
     
     all_nodes.push_back(std::move(new_root_ptr));
     root = all_nodes.back().get();
 
-    // Adjust branch lengths
-    root_start->branch_length = rp.dist_from_start;
-    root_end->branch_length = rp.dist_from_end;
+    Node* lower_node = start;
+    Node* higher_node = end;
+    double lower_node_bl = rp.dist_from_start;
+    double higher_node_bl = rp.dist_from_end;
 
-    root_start->father_id = root->id;
-    root_end->father_id = root->id;
-    
-	// Recalculate ranks and data for the affected subtree
-    root->set_rank_from_root(0);
-    std::vector<std::tuple<Node*, Node*, int>> nodes_to_recalc;
-	std::vector<Node*> raw_nodes = get_raw_pointers_from_unique(all_nodes);
-
-
-    nodes_to_recalc.push_back({ raw_nodes[rp.start_id], root, rp.end_id });
-    nodes_to_recalc.push_back({ raw_nodes[rp.end_id], root, rp.start_id });
-
-    while (!nodes_to_recalc.empty()) {
-        auto [node, father, broke] = nodes_to_recalc.back();
-        nodes_to_recalc.pop_back();
-        recalc_tree_down(node, father, broke, nodes_to_recalc, raw_nodes);
+    if (find(start->children_ids.begin(), start->children_ids.end(), end->id) != start->children_ids.end()) {
+        lower_node = end;
+        higher_node = start;
+        lower_node_bl = rp.dist_from_end;
+        higher_node_bl = rp.dist_from_start;
     }
 
-    // Sort by rank and update data from children (highest rank first)
-    std::vector<Node*> sorted_by_rank = raw_nodes;
-    std::sort(sorted_by_rank.begin(), sorted_by_rank.end(),
-        [](const Node* a, const Node* b) { return a->rank_from_root > b->rank_from_root; });
+    lower_node->father_id = root->id;
+    lower_node->branch_length = lower_node_bl;
+    higher_node->children_ids.erase(remove(higher_node->children_ids.begin(), higher_node->children_ids.end(), lower_node->id), higher_node->children_ids.end());
+    int prev_father_id = higher_node->father_id;
+    double prev_dist_to_father = higher_node->branch_length;
+    if (higher_node->father_id != -1) {
+        higher_node->children_ids.push_back(higher_node->father_id);
+    }
+	higher_node->father_id = root->id;
+    higher_node->branch_length = higher_node_bl;
 
-    for (auto* node : sorted_by_rank) {
-        node->update_data_from_children(raw_nodes);
+    while (prev_father_id != -1) {
+        int working_node_id = prev_father_id;
+		Node* working_node = all_nodes[working_node_id].get();
+        double working_node_to_father_bl = working_node->branch_length;
+        prev_father_id = working_node->father_id;
+        working_node->father_id = higher_node->id;
+        working_node->branch_length = prev_dist_to_father;
+        working_node->children_ids.erase(remove(working_node->children_ids.begin(), working_node->children_ids.end(), higher_node->id), working_node->children_ids.end());
+        if (prev_father_id != -1) {
+            working_node->children_ids.push_back(prev_father_id);
+        }
+        prev_dist_to_father = working_node_to_father_bl;
+        higher_node = working_node;
     }
 }
 
@@ -232,49 +227,6 @@ std::vector<RootingPoint> calc_min_differential_sum(const UnrootedTree& unrooted
     return res;
 }
 
-void recalc_tree_down(Node* node, Node* father, int broke_id,
-                       std::vector<std::tuple<Node*, Node*, int>>& nodes_to_recalc,
-                       std::vector<Node*>& all_nodes) {
-    node->set_rank_from_root(father->rank_from_root + 1);
-
-    // Check if father is in node's children
-    bool father_is_child = false;
-    for (int c_id : node->children_ids) {
-        if (c_id == father->id) {
-            father_is_child = true;
-            break;
-        }
-    }
-    if (father_is_child) {
-        node->branch_length = father->branch_length;
-    }
-
-    auto adj = node->get_adj(all_nodes);
-    std::vector<int> new_children;
-    for (const auto& a : adj) {
-        if (a.node_id != father->id && a.node_id != broke_id) {
-            //for (auto* n : all_nodes) {
-            //    if (n->id == a.node_id) {
-                    //new_children.push_back(n->id);
-            //        break;
-            //    }
-            //}
-                    new_children.push_back(a.node_id);
-        }
-    }
-
-    if (!new_children.empty()) {
-        node->update_children_only(new_children);
-        if (new_children.size() >= 1) {
-            nodes_to_recalc.push_back({ all_nodes[new_children[0]], node, broke_id});
-        }
-        if (new_children.size() >= 2) {
-            nodes_to_recalc.push_back({ all_nodes[new_children[1]], node, broke_id});
-        }
-    }
-    node->father_id = father->id;
-}
-
 void fill_nodes_w(Node* node, std::deque<Node*>& nodes_to_recalc, std::vector<Node*>& all_nodes) {
     std::vector<double> w_list;
     if (node->father_id != -1) {
@@ -292,37 +244,6 @@ void fill_nodes_w(Node* node, std::deque<Node*>& nodes_to_recalc, std::vector<No
     } else {
         node->set_weight_from_root();
     }
-}
-
-
-RootingPoint RootedTree::find_shallowest_tree(
-    const UnrootedTree& ut,
-    const std::vector<RootingPoint>& rooting_points)
-{
-    RootingPoint best = rooting_points[0];
-    double best_depth = std::numeric_limits<double>::max();
-
-    for (const auto& rp : rooting_points)
-    {
-        Node* start = ut.all_nodes[rp.start_id].get();
-        Node* end = ut.all_nodes[rp.end_id].get();
-
-        double depth = longest_dist_from_virtual_root(
-            ut,
-            start,
-            end,
-            rp.dist_from_start,
-            rp.dist_from_end);
-
-        if (depth < best_depth)
-        {
-            best_depth = depth;
-            best = rp;
-            best.longest_dist = depth;
-        }
-    }
-
-    return best;
 }
 
 double longest_dist_from_virtual_root(
@@ -365,4 +286,85 @@ double longest_dist_from_virtual_root(
     }
 
     return max_dist;
+}
+
+string RootedTree::print_newick() const {
+    string newick_str = get_newick(root) + ";";
+    cout << newick_str << std::endl;
+    return newick_str;
+
+
+    //std::vector<Node*> raw_nodes = get_raw_pointers_from_unique(all_nodes);
+    //anchor->fill_newick(raw_nodes);
+    //out << anchor->newick_part << ";" << std::endl;
+}
+
+
+string RootedTree::get_newick(Node* node) const {
+    string newick_str;
+    if (node->children_ids.size() == 0) {
+        newick_str = *node->keys.begin();
+        newick_str += ":";
+    }
+    else {
+        newick_str = "(";
+        vector<string> strings;
+        for (int i = 0; i < node->children_ids.size(); ++i) {
+            int child_id = node->children_ids[i];
+            Node* c = all_nodes[child_id].get();
+            strings.push_back(get_newick(c));
+        }
+        sort(strings.begin(), strings.end());
+        for (int i = 0; i < strings.size(); ++i) {
+            newick_str += strings[i];
+            if (i < strings.size() - 1) {
+                newick_str += ",";
+            }
+            else {
+                newick_str += "):";
+            }
+        }
+    }
+    newick_str += to_string(node->branch_length);
+    return newick_str;
+}
+
+RootingPoint get_rooting_point(RootingMethods rooting_method, const UnrootedTree& unrooted) {
+    // Find midpoint rooting location
+    if (rooting_method == RootingMethods::LONGEST_PATH_MID) {
+        return calc_mid_point(unrooted);
+    }
+    auto rooting_points = calc_min_differential_sum(unrooted);
+    return find_shallowest_tree(unrooted, rooting_points);
+    
+}
+
+RootingPoint find_shallowest_tree(
+    const UnrootedTree& ut,
+    const std::vector<RootingPoint>& rooting_points)
+{
+    RootingPoint best = rooting_points[0];
+    double best_depth = std::numeric_limits<double>::max();
+
+    for (const auto& rp : rooting_points)
+    {
+        Node* start = ut.all_nodes[rp.start_id].get();
+        Node* end = ut.all_nodes[rp.end_id].get();
+
+        double depth = longest_dist_from_virtual_root(
+            ut,
+            start,
+            end,
+            rp.dist_from_start,
+            rp.dist_from_end);
+
+        if (depth < best_depth)
+        {
+            best_depth = depth;
+            best = rp;
+            best.longest_dist = depth;
+        }
+    }
+
+    return best;
 }

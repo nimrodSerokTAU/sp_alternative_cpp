@@ -44,13 +44,20 @@ std::pair<std::vector<double>, std::vector<double>> WSopStats::compute_seq_w_hen
 std::vector<double> WSopStats::get_weight_list(const UnrootedTree& tree, RootingMethods rooting_method,
                                                  const std::vector<std::string>& seq_names) {
     std::string key = rooting_method_to_string(rooting_method);
-    auto rt = std::make_unique<RootedTree>(RootedTree(tree, rooting_method));
+    RootingPoint rp = get_rooting_point(rooting_method, tree);
+    auto rt = std::make_unique<RootedTree>(RootedTree(tree, rp));
+    string x = rt->print_newick();
     rt->calc_seq_w();
     std::vector<double> weights;
     for (const auto& s_name : seq_names) {
         weights.push_back(rt->seq_weight_dict[s_name]);
     }
     rooted_trees[key] = std::move(rt);
+
+
+    for (size_t i = 0; i < weights.size(); i++) {
+        std::cout << "Weight for sequence " << seq_names[i] << " with method " << key << ": " << weights[i] << std::endl;
+	}
     return weights;
 }
 

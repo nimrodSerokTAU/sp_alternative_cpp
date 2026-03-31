@@ -76,13 +76,14 @@ void multiple_msa_calc_features_and_labels(const Configuration& config) {
         bool is_init_files = true;
         for (const auto& inferred_file_name : ordered.other_file_names) {
             std::string msa_name = inferred_file_name;
-            std::cout << msa_name << std::endl;
+            std::cout << "=================================="<< msa_name << "===================================" << std::endl;
 
             MSA inferred_msa(msa_name);
             inferred_msa.read_from_fasta(dir_path / inferred_file_name);
             inferred_msa.order_sequences(true_msa.seq_names);
             inferred_msa.calc_and_print_stats(true_msa, config, sp_models, output_dir_path,
                                                true_msa.tree.get(), is_init_files);
+            string newick_str = inferred_msa.tree->print_newick();
             is_init_files = false;
         }
 

@@ -38,6 +38,7 @@ public:
     double get_longest_dist_to(Node* dest) const;
     string print_newick() const;
     string get_newick(Node* node) const;
+
 };
 
 // Free functions for Newick parsing

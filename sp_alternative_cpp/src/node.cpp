@@ -132,6 +132,10 @@ void Node::update_data_from_children(std::vector<Node*>all_nodes) {
 
 void Node::set_weight_from_root() {
     double w = 0;
+    std::set<std::string> ar = { "Acomys_russatus" };
+    if (keys == ar) {
+        int debug = 1;
+    }
     std::vector<double> rev_w(w_from_root.rbegin(), w_from_root.rend());
     for (size_t index = 0; index < rev_w.size(); index++) {
         w += rev_w[index] / (index + 1);

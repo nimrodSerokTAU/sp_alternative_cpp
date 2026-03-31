@@ -14,6 +14,7 @@ struct Configuration {
     std::set<WeightMethods> additional_weights;
     std::set<StatsOutput> stats_output;
     std::set<int> k_values;
+	bool is_using_substitutions_matrix;
 
     Configuration(const std::vector<EvoModel>& models_list,
                   SopCalcTypes sop_calc_type = SopCalcTypes::EFFICIENT,
@@ -22,7 +23,8 @@ struct Configuration {
                   const std::string& matrix_dir_path = "",
                   const std::set<WeightMethods>& additional_weights = {},
                   const std::set<int>& k_values = {},
-                  const std::set<StatsOutput>& stats_output = {StatsOutput::ALL})
+                  const std::set<StatsOutput>& stats_output = {StatsOutput::ALL},
+                  const bool is_using_substitutions_matrix = false)
         : models(models_list),
           sop_calc_type(sop_calc_type),
           input_files_dir_path(input_files_dir_path),
@@ -30,5 +32,6 @@ struct Configuration {
           matrix_dir_path(matrix_dir_path),
           additional_weights(additional_weights),
           stats_output(stats_output),
-          k_values(k_values) {}
+          k_values(k_values), 
+          is_using_substitutions_matrix(is_using_substitutions_matrix) {}
 };

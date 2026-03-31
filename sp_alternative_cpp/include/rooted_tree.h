@@ -26,15 +26,13 @@ public:
     //RootedTree(Node* root, const std::vector<Node*>& all_nodes, const std::set<std::string>& keys);
     RootedTree(Node* r, std::vector<std::unique_ptr<Node>> nodes, const std::set<std::string>& k);
 
-    RootedTree(const UnrootedTree& unrooted, RootingMethods rooting_method);
-
-    static RootingPoint find_shallowest_tree(
-        const UnrootedTree& ut,
-        const std::vector<RootingPoint>& rooting_points);
-
+    RootedTree(const UnrootedTree& unrooted, RootingPoint rp);
 
     void calc_clustal_w(std::vector<Node*> raw_nodes);
     void calc_seq_w();
+
+    string get_newick(Node* node) const;
+    string print_newick() const;
 };
 
 
@@ -49,6 +47,12 @@ void fill_nodes_w(Node* node, std::deque<Node*>& nodes_to_recalc, std::vector<No
 double sum_bl_up_to_node_id(Node* origin, int dest_id, const std::vector<Node*>& all_nodes);
 RootingPoint calc_potential_root_on_branch(double bl, double w_to_orig, double w_to_dest,
                                             double delta, int origin, int dest, double min_bl);
+
+RootingPoint find_shallowest_tree(
+    const UnrootedTree& ut,
+    const std::vector<RootingPoint>& rooting_points);
+
+RootingPoint get_rooting_point(RootingMethods rooting_method, const UnrootedTree& unrooted);
 
 double longest_dist_from_virtual_root(
     const UnrootedTree& tree,

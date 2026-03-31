@@ -21,6 +21,7 @@
 		"CLUSTAL_DIFFERENTIAL_SUM"
 	],
 	"k_values": [5, 10, 20],
+	"is_using_substitutions_matrix": false,
 	"stats_output": ["ALL"],
 	"input_files_dir_path": "D:/PhDB/papers/first/large_trees/ALL_MSAs",
 	"output_file_dir_path": "D:/PhDB/papers/first/large_trees",

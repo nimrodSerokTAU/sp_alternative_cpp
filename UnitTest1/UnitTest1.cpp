@@ -29,6 +29,68 @@ namespace spalternativeUnitTests
 	string blosum62Path = "D:/code/sp_alternative/sp_alternative/input_config_files/Blosum62.txt";
 	string newick_of_AATF = "((((Macropus:0.051803,Monodelphis:  0.066021): 0.016682,Sarcophilus:0.068964):0.114355,((Echinops:0.104144,(Loxodonta:0.076474,Procavia:0.076193):0.011550):0.013015,((Choloepus:0.056091,Dasypus:0.040600):0.013681,(((((Callithrix:0.032131,((((Gorilla:0.007042,(Homo:0.002445,Pan:0.002450):0.001237):0.003689,Pongo:0.007508):0.002384,Nomascus:0.015696):0.004674,Macaca:0.013752):0.012205):0.029730,((Microcebus:0.037066,Otolemur:0.050935):0.008091,Tarsius:0.064938):0.007305):0.003377,Tupaia:0.090946):0.000699,(((Cavia:0.116826,(Dipodomys:0.080386,(Mus:0.040313,Rattus:0.033872):0.122329):0.013314):0.000298,Ictidomys:0.062932):0.011064,(Ochotona:0.087746,Oryctolagus:0.057769):0.035947):0.002130):0.006931,(Erinaceus:0.094727,(((((Bos:0.062659,Tursiops:0.024374):0.009782,Sus:0.064336):0.006134,Vicugna:0.049961):0.021643,Equus:0.046559):0.002728,(Sorex:0.126677,((Myotis:0.050452,Pteropus:0.047740):0.006495,(Felis:0.042414,(Canis:0.036675,(Mustela:0.027691,Ailuropoda:0.037553):0.004251):0.008141):0.019485):0.000485):0.003533):0.000528):0.005645):0.012900):0.002853):0.133251):0.019558,Ornithorhynchus:0.195576);";
 
+	UnrootedTree create_unrooted_tree_for_test() {
+		vector<unique_ptr<Node>> all_nodes;
+
+		auto n_a = make_unique<Node>(0, set<string>{"a"}, vector<int>{}, 0.0, 0.2);
+		auto n_b = make_unique<Node>(1, set<string>{"b"}, vector<int>{}, 0.0, 0.1);
+		auto n_c = make_unique<Node>(2, set<string>{"c"}, vector<int>{}, 0.0, 0.15);
+		auto n_d = make_unique<Node>(3, set<string>{"d"}, vector<int>{}, 0.0, 0.25);
+		auto n_e = make_unique<Node>(4, set<string>{"e"}, vector<int>{}, 0.0, 0.05);
+
+		// Keep raw pointers
+		Node* p_a = n_a.get();
+		Node* p_b = n_b.get();
+		Node* p_c = n_c.get();
+		Node* p_d = n_d.get();
+		Node* p_e = n_e.get();
+
+		all_nodes.push_back(std::move(n_a));
+		all_nodes.push_back(std::move(n_b));
+		all_nodes.push_back(std::move(n_c));
+		all_nodes.push_back(std::move(n_d));
+		all_nodes.push_back(std::move(n_e));
+
+		// --- 2. Internal nodes ---
+
+		// n_a_c
+		auto n_a_c = make_unique<Node>(5, set<string>{}, vector<int>{p_a->id, p_c->id}, 0, 0.6);
+		Node* p_a_c = n_a_c.get();
+		p_a->set_a_father(p_a_c->id);
+		p_c->set_a_father(p_a_c->id);
+		p_a_c->keys.insert(p_a->keys.begin(), p_a->keys.end());
+		p_a_c->keys.insert(p_c->keys.begin(), p_c->keys.end());
+		all_nodes.push_back(std::move(n_a_c));
+
+
+		// n_a_c_d
+		auto n_a_c_d = make_unique<Node>(6, set<string>{}, vector<int>{p_a_c->id, p_d->id}, 0, 0.3);
+		Node* p_a_c_d = n_a_c_d.get();
+		p_a_c->set_a_father(p_a_c_d->id);
+		p_d->set_a_father(p_a_c_d->id);
+		p_a_c_d->keys.insert(p_a_c->keys.begin(), p_a_c->keys.end());
+		p_a_c_d->keys.insert(p_d->keys.begin(), p_d->keys.end());
+
+		all_nodes.push_back(std::move(n_a_c_d));
+
+
+		// anchor
+		auto anchor_node = make_unique<Node>(7, set<string>{}, vector<int>{p_a_c_d->id, p_b->id, p_e->id}, 0);
+		Node* anchor = anchor_node.get();
+
+		p_a_c_d->set_a_father(anchor->id);
+		p_b->set_a_father(anchor->id);
+		p_e->set_a_father(anchor->id);
+
+		for (auto* c : vector<Node*>{ p_a_c_d , p_b, p_e }) {
+			anchor->keys.insert(c->keys.begin(), c->keys.end());
+		}
+
+		all_nodes.push_back(std::move(anchor_node));
+		UnrootedTree tree(anchor, std::move(all_nodes));
+		return tree;
+	}
+
 	TEST_CLASS(spalternativeUnitTests)
 	{
 	public:
@@ -183,7 +245,8 @@ namespace spalternativeUnitTests
 				"AA-DCQ--AI",
 				"AA--CQEGHI"
 			};
-			SPScore::SpSAndGe res = sp1.compute_sp_s_and_sp_ge(profile1);
+			vector<vector<int>> substitutions_matrix;	
+			SPScore::SpSAndGe res = sp1.compute_sp_s_and_sp_ge(profile1, substitutions_matrix, false);
 
 			vector<double> vw1 = { 1.0, 1.0, 1.0 };
 			vector<vector<double>> vvw1 = { vw1 };
@@ -233,8 +296,7 @@ namespace spalternativeUnitTests
 				"AA-DCQ--AI",
 				"AA--CQEGHI"
 			};
-
-			double efficientRes = sp1.compute_efficient_sp(profile1);
+			double efficientRes = sp1.compute_efficient_sp(profile1, false);
 			vector<double> vw1 = { 1.0, 1.0, 1.0 };
 			vector<vector<double>> vvw1 = { vw1 };
 			vector<double> resNaive = sp1.compute_naive_sp_score(profile1, &vvw1);
@@ -254,8 +316,7 @@ namespace spalternativeUnitTests
 				"YEETSEES----VADNENRAE-VHLILSTNFVIADPEPKWG-LRSKDMNWYDQRTH--LGMGPVLGIQFLF",
 				"YEETSEESLKRIVADNENRAEKVHLILSTNFVIADPEPKWG--RSKDMNWYDQRTHKFLGMGPVLGIQFLF"
 			};
-
-			double efficientRes = sp1.compute_efficient_sp(profile1);
+			double efficientRes = sp1.compute_efficient_sp(profile1, false);
 			vector<double> vw1 = { 1.0, 1.0, 1.0, 1.0 };
 			vector<vector<double>> vvw1 = { vw1 };
 			vector<double> resNaive = sp1.compute_naive_sp_score(profile1, &vvw1);
@@ -276,7 +337,7 @@ namespace spalternativeUnitTests
 				"YLKE-AK"
 			};
 
-			double efficientRes = sp1.compute_efficient_sp(profile1);
+			double efficientRes = sp1.compute_efficient_sp(profile1, false);
 			vector<double> vw1 = { 1.0, 1.0, 1.0, 1.0 };
 			vector<vector<double>> vvw1 = { vw1 };
 			vector<double> resNaive = sp1.compute_naive_sp_score(profile1, &vvw1);
@@ -1160,5 +1221,61 @@ namespace spalternativeUnitTests
 			Assert::AreEqual(res_t_1, 0.044, 0.001);
 		}
 
+		TEST_METHOD(rooting_case_a)
+		{
+			UnrootedTree unrooted = create_unrooted_tree_for_test();
+			RootingPoint rp(6, 7, 0.22, 0.08, -1.0);
+			RootedTree tree = RootedTree(unrooted, rp);
+
+			vector<double> expected_branch_lengths = { 0.2, 0.1, 0.15, 0.25, 0.05, 0.6, 0.22, 0.08, 0 };
+			for (int i = 0; i < 9; ++i) {
+				Node* thisNode = tree.all_nodes[i].get();
+				Assert::AreEqual(thisNode->branch_length, expected_branch_lengths[i], 0.001);
+				if (i < 5) {
+					Assert::AreEqual(int(thisNode->children_ids.size()), 0);
+				}
+				else {
+					Assert::AreEqual(int(thisNode->children_ids.size()), 2);
+				}
+			}
+		}
+
+		TEST_METHOD(rooting_case_b)
+		{
+			UnrootedTree unrooted = create_unrooted_tree_for_test();
+			RootingPoint rp(6, 5, 0.2, 0.4, -1.0);
+			RootedTree tree = RootedTree(unrooted, rp);
+
+			vector<double> expected_branch_lengths = { 0.2, 0.1, 0.15, 0.25, 0.05, 0.4, 0.2, 0.3, 0 };
+			for (int i = 0; i < 9; ++i) {
+				Node* thisNode = tree.all_nodes[i].get();
+				Assert::AreEqual(thisNode->branch_length, expected_branch_lengths[i], 0.001);
+				if (i < 5) {
+					Assert::AreEqual(int(thisNode->children_ids.size()), 0);
+				}
+				else {
+					Assert::AreEqual(int(thisNode->children_ids.size()), 2);
+				}
+			}
+		}
+		
+		TEST_METHOD(rooting_case_c)
+		{
+			UnrootedTree unrooted = create_unrooted_tree_for_test();
+			RootingPoint rp(0, 5, 0.07, 0.13, -1.0);
+			RootedTree tree = RootedTree(unrooted, rp);
+
+			vector<double> expected_branch_lengths = { 0.07, 0.1, 0.15, 0.25, 0.05, 0.13, 0.6, 0.3, 0 };
+			for (int i = 0; i < 9; ++i) {
+				Node* thisNode = tree.all_nodes[i].get();
+				Assert::AreEqual(thisNode->branch_length, expected_branch_lengths[i], 0.001);
+				if (i < 5) {
+					Assert::AreEqual(int(thisNode->children_ids.size()), 0);
+				}
+				else {
+					Assert::AreEqual(int(thisNode->children_ids.size()), 2);
+				}
+			}
+		}
 	};
 }
