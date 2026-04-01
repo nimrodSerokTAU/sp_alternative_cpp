@@ -20,6 +20,7 @@
 #include "../sp_alternative_cpp/include/msa.h"
 #include "../sp_alternative_cpp/include/w_Sop_stats.h"
 #include "../sp_alternative_cpp/include/utils.h"
+#include <iostream>
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace std;
 
@@ -89,6 +90,15 @@ namespace spalternativeUnitTests
 		all_nodes.push_back(std::move(anchor_node));
 		UnrootedTree tree(anchor, std::move(all_nodes));
 		return tree;
+	}
+
+	Node* find_node_by_keys(const std::vector<Node*>& nodes, const std::set<std::string>& target_keys) {
+		auto it = std::find_if(nodes.begin(), nodes.end(),
+			[&](Node* node) {
+				return node->keys == target_keys;
+			});
+
+		return (it != nodes.end()) ? *it : nullptr;
 	}
 
 	TEST_CLASS(spalternativeUnitTests)
@@ -1276,6 +1286,104 @@ namespace spalternativeUnitTests
 					Assert::AreEqual(int(thisNode->children_ids.size()), 2);
 				}
 			}
+		}
+
+		TEST_METHOD(rooting_case_d)
+		{
+			//string newick = "(((((((((((((((Grammomys_surdaster:0.094018,Rattus_norvegicus:0.091931):0.091668,Apodemus_sylvaticus:0.186518):0.130051,(Mesocricetus_auratus:0.174981,Phodopus_roborovskii:0.178931):0.190541):0.054003,Cricetulus_griseus:0.409168):0.127290,(((Mandrillus_leucophaeus:0.403218,Mus_pahari:0.414545):0.074584,Tupaia_chinensis:0.416321):0.044631,Hipposideros_armiger:0.503176):0.007727):0.027741,((((Dipodomys_spectabilis:0.597143,Perognathus_longimembris_pacificus:1.493979):0.414428,Jaculus_jaculus:0.540011):0.495539,Equus_przewalskii:0.504461):0.042163,Manis_pentadactyla:0.488968):0.050030):0.009218,Myotis_davidii:0.532629):0.059763,Condylura_cristata:0.430158):0.025425,Equus_quagga:0.472891):0.063130,(Balaenoptera_acutorostrata_scammoni:0.275313,Balaenoptera_musculus:0.213649):0.033392):0.043378,Hyaena_hyaena:0.309704):0.054654,(((((((((Rhinolophus_ferrumequinum:0.099350,Sus_scrofa:0.133844):0.020719,Prionailurus_bengalensis:0.168304):0.014171,(Carlito_syrichta:0.154886,Otolemur_garnettii:0.144293):0.052677):0.018333,Suricata_suricatta:0.212266):0.022806,Dasypus_novemcinctus:0.242557):0.068824,(Galeopterus_variegatus:0.122153,Macaca_nemestrina:0.156135):0.166575):0.009390,(Aotus_nancymaae:0.297897,Cebus_imitator:0.336023):0.075308):0.023396,Microcebus_murinus:0.373571):0.044918,Rousettus_aegyptiacus:0.403349):0.029021):0.058491,Molossus_molossus:0.435736):0.028099,(((Myodes_glareolus:0.072444,Peromyscus_leucopus:0.060376):0.179877,Sorex_araneus:0.337851):0.106576,(Acomys_russatus:0.281378,Nannospalax_galili:0.248545):0.109855):0.068974):0.015453,((((((((((((((Sturnira_hondurensis:0.944934,Urocitellus_parryii:1.055066):0.055960,Erinaceus_europaeus:0.944040):0.271553,Elephantulus_edwardii:0.728447):0.175118,Vulpes_vulpes:0.881384):0.164137,Vicugna_pacos:0.663009):0.088956,(Ceratotherium_simum_simum:0.644495,Loxodonta_africana:0.716172):0.178792):0.059907,(Cercocebus_atys:0.919082,Suncus_etruscus:0.726776):0.032272):0.026291,(((Choloepus_didactylus:0.476678,Chrysochloris_asiatica:0.665470):0.239322,Trichechus_manatus_latirostris:0.611229):0.052494,(Ochotona_princeps:0.711918,Odocoileus_virginianus_texanus:0.780655):0.085818):0.053783):0.055438,(((Desmodus_rotundus:0.287195,Phyllostomus_discolor:0.370743):0.081775,Artibeus_jamaicensis:0.602598):0.057247,Bos_indicus:0.512644):0.027219):0.024561,Miniopterus_natalensis:0.701458):0.053564,Castor_canadensis:0.665204):0.007626,(Orycteropus_afer_afer:0.559711,Phascolarctos_cinereus:0.639816):0.035858):0.057740,Talpa_occidentalis:0.534694):0.046753,((((Meles_meles:0.337363,Mirounga_leonina:0.158289):0.120636,Vulpes_lagopus:0.282327):0.129021,Nomascus_leucogenys:0.359029):0.189430,Ornithorhynchus_anatinus:0.560461):0.052013):0.013405,Physeter_catodon:0.440763);";
+			string newick = "(((((((((Dasypus_novemcinctus:0.242557,(((Carlito_syrichta:0.154886,Otolemur_garnettii:0.144293):0.052677,((Rhinolophus_ferrumequinum:0.099350,Sus_scrofa:0.133844):0.020719,Prionailurus_bengalensis:0.168304):0.014171):0.018333,Suricata_suricatta:0.212266):0.022806):0.068824,(Macaca_nemestrina:0.156135,Galeopterus_variegatus:0.122153):0.166575):0.009390,(Aotus_nancymaae:0.297897,Cebus_imitator:0.336023):0.075308):0.023396,Microcebus_murinus:0.373571):0.044918,Rousettus_aegyptiacus:0.403349):0.029021,((((((((((Perognathus_longimembris_pacificus:1.493979,Dipodomys_spectabilis:0.597143):0.414428,Jaculus_jaculus:0.540011):0.495539,Equus_przewalskii:0.504461):0.042163,Manis_pentadactyla:0.488968):0.050030,((((Apodemus_sylvaticus:0.186518,(Grammomys_surdaster:0.094018,Rattus_norvegicus:0.091931):0.091668):0.130051,(Phodopus_roborovskii:0.178931,Mesocricetus_auratus:0.174981):0.190541):0.054003,Cricetulus_griseus:0.409168):0.127290,(((Mus_pahari:0.414545,Mandrillus_leucophaeus:0.403218):0.074584,Tupaia_chinensis:0.416321):0.044631,Hipposideros_armiger:0.503176):0.007727):0.027741):0.009218,Myotis_davidii:0.532629):0.059763,Condylura_cristata:0.430158):0.025425,Equus_quagga:0.472891):0.063130,(Balaenoptera_musculus:0.213649,Balaenoptera_acutorostrata_scammoni:0.275313):0.033392):0.043378,Hyaena_hyaena:0.309704):0.054654):0.058491,Molossus_molossus:0.435736):0.028099,((Acomys_russatus:0.281378,Nannospalax_galili:0.248545):0.109855,((Peromyscus_leucopus:0.060376,Myodes_glareolus:0.072444):0.179877,Sorex_araneus:0.337851):0.106576):0.068974):0.015453,((((Castor_canadensis:0.665204,(((((Ochotona_princeps:0.711918,Odocoileus_virginianus_texanus:0.780655):0.085818,((Chrysochloris_asiatica:0.665470,Choloepus_didactylus:0.476678):0.239322,Trichechus_manatus_latirostris:0.611229):0.052494):0.053783,(((((((Urocitellus_parryii:1.055066,Sturnira_hondurensis:0.944934):0.055960,Erinaceus_europaeus:0.944040):0.271553,Elephantulus_edwardii:0.728447):0.175118,Vulpes_vulpes:0.881384):0.164137,Vicugna_pacos:0.663009):0.088956,(Ceratotherium_simum_simum:0.644495,Loxodonta_africana:0.716172):0.178792):0.059907,(Cercocebus_atys:0.919082,Suncus_etruscus:0.726776):0.032272):0.026291):0.055438,((Artibeus_jamaicensis:0.602598,(Phyllostomus_discolor:0.370743,Desmodus_rotundus:0.287195):0.081775):0.057247,Bos_indicus:0.512644):0.027219):0.024561,Miniopterus_natalensis:0.701458):0.053564):0.007626,(Orycteropus_afer_afer:0.559711,Phascolarctos_cinereus:0.639816):0.035858):0.057740,Talpa_occidentalis:0.534694):0.046753,((Nomascus_leucogenys:0.359029,((Mirounga_leonina:0.158289,Meles_meles:0.337363):0.120636,Vulpes_lagopus:0.282327):0.129021):0.189430,Ornithorhynchus_anatinus:0.560461):0.052013):0.013405,Physeter_catodon:0.440763);";
+			UnrootedTree ut = UnrootedTree(newick);
+			vector<Node*> raw_nodes = get_raw_pointers_from_unique(ut.all_nodes);
+			Node* startNode = find_node_by_keys(raw_nodes, { "Tupaia_chinensis", "Rattus_norvegicus", "Dipodomys_spectabilis", "Perognathus_longimembris_pacificus", "Mesocricetus_auratus", "Grammomys_surdaster", "Mus_pahari", "Hipposideros_armiger", "Equus_przewalskii", "Cricetulus_griseus", "Phodopus_roborovskii", "Mandrillus_leucophaeus", "Apodemus_sylvaticus", "Jaculus_jaculus", "Manis_pentadactyla" });
+			Node* endNode = find_node_by_keys(raw_nodes, { "Myotis_davidii", "Tupaia_chinensis", "Rattus_norvegicus", "Dipodomys_spectabilis", "Perognathus_longimembris_pacificus", "Mesocricetus_auratus", "Grammomys_surdaster", "Mus_pahari", "Hipposideros_armiger", "Equus_przewalskii", "Cricetulus_griseus", "Phodopus_roborovskii", "Mandrillus_leucophaeus", "Apodemus_sylvaticus", "Jaculus_jaculus", "Manis_pentadactyla" });
+
+			RootingPoint rp(startNode->id, endNode->id, 0.008774422290135586, 0.00044397946182012094, -1.0);
+			RootedTree tree = RootedTree(ut, rp);
+
+			vector<double> expected_branch_lengths = { 0.242556,1.493979,0.597142,0.540011,0.281377,0.186517,0.414544,0.094017,0.091930,0.178931,0.174981,0.409167,0.060375,0.072444,0.248545,
+				0.665204,0.711918,1.055066,0.359029,0.156134,0.919082,0.403217,0.297897,0.336023,0.154886,0.144293,0.373571,0.122152,0.416320,0.435735,0.532629,0.701457,0.944933,0.602598,
+				0.370742,0.287194,0.503176,0.099350,0.403349,0.158289,0.337362,0.282327,0.881383,0.212265,0.168303,0.309703,0.488967,0.440763,0.213649,0.275312,0.512644,0.780655,0.133843,
+				0.663008,0.644494,0.504461,0.472890,0.534693,0.430157,0.944039,0.337850,0.726776,0.728447,0.665470,0.611228,0.716171,0.559711,0.639815,0.560461,0.476677,0.414428,0.055960,
+				0.271552,0.495538,0.239321,0.175118,0.091668,0.190541,0.130050,0.120636,0.178792,0.164136,0.179876,0.054002,0.129021,0.074584,0.127290,0.042162,0.044631,0.050029,0.088955,
+				0.007726,0.027741,0.189430,0.008774,0.000443,0.106576,0.059763,0.109854,0.025425,0.166574,0.085817,0.059907,0.052493,0.032271,0.026291,0.081775,0.053783,0.052677,0.020718,
+				0.014171,0.018333,0.022805,0.075307,0.068824,0.033392,0.057246,0.055438,0.063130,0.068973,0.052013,0.009390,0.023395,0.043378,0.044917,0.027219,0.024560,0.029021,0.053563,
+				0.054653,0.035858,0.007625,0.057740,0.046753,0.058490,0.028099,0.013404,0.015453,0 };
+			for (int i = 0; i < 139; ++i) {
+				if (i == 90) {
+					bool debug = true;
+				}
+				Node* thisNode = tree.all_nodes[i].get();
+				cout << "Node " << i << ": branch_length = " << thisNode->branch_length << ", expected = " << expected_branch_lengths[i] << endl;
+				//Assert::AreEqual(thisNode->branch_length, expected_branch_lengths[i], 0.001);
+				int children_ids_size = int(thisNode->children_ids.size());
+				Assert::IsTrue(children_ids_size == 0 || children_ids_size == 2);
+			}
+
+			set<string> root_keys = tree.get_my_keys_set(tree.root);
+			Assert::IsTrue(root_keys.size() == 70);
+			int root_children_count = tree.get_my_children_count(tree.root);
+			Assert::IsTrue(root_children_count == 138);
+
+			vector<Node*> tree_raw_nodes = get_raw_pointers_from_unique(tree.all_nodes);
+
+
+			int child_a_id = tree.root->children_ids[0];
+			int child_b_id = tree.root->children_ids[1];
+
+			set<string> c_a_keys = tree.get_my_keys_set(tree_raw_nodes[child_a_id]);
+			Assert::IsTrue(c_a_keys.size() == 15);
+			set<string> c_b_keys = tree.get_my_keys_set(tree_raw_nodes[child_b_id]);
+			Assert::IsTrue(c_b_keys.size() == 55);
+
+			string newick_str = tree.print_newick();
+			bool a = 1;
+		}
+
+		TEST_METHOD(rooting_case_e)
+		{
+			string msaFilePath = "bali_phy_msa.1.fas";
+			string dataset_name = "test";
+			MSA msa(dataset_name);
+			msa.read_from_fasta(msaFilePath);
+			msa.build_nj_tree();
+			UnrootedTree* ut = msa.tree.get();
+
+			vector<Node*> raw_nodes;
+			raw_nodes.reserve(ut->all_nodes.size());
+
+			transform(ut->all_nodes.begin(), ut->all_nodes.end(),
+				back_inserter(raw_nodes),
+				[](const unique_ptr<Node>& p) { return p.get(); });
+
+
+			RootingPoint rp = get_rooting_point(RootingMethods::LONGEST_PATH_MID, *ut);
+			RootedTree rt = RootedTree(*ut, rp);
+			string x = rt.print_newick();
+
+			vector<Node*> rt_raw_nodes = get_raw_pointers_from_unique(rt.all_nodes);
+			
+			for (int i = 0; i < 139; ++i) {
+				Node* thisNode = rt_raw_nodes[i];
+				//Assert::AreEqual(thisNode->branch_length, expected_branch_lengths[i], 0.001);
+				int children_ids_size = int(thisNode->children_ids.size());
+				Assert::IsTrue(children_ids_size == 0 || children_ids_size == 2);
+			}
+
+			set<string> root_keys = rt.get_my_keys_set(rt.root);
+			Assert::IsTrue(root_keys.size() == 70);
+			int root_children_count = rt.get_my_children_count(rt.root);
+			Assert::IsTrue(root_children_count == 138);
+
+			int child_a_id = rt.root->children_ids[0];
+			int child_b_id = rt.root->children_ids[1];
+
+			set<string> c_a_keys = rt.get_my_keys_set(rt_raw_nodes[child_a_id]);
+			Assert::IsTrue(c_a_keys.size() == 15);
+			set<string> c_b_keys = rt.get_my_keys_set(rt_raw_nodes[child_b_id]);
+			Assert::IsTrue(c_b_keys.size() == 55);
+
+			string newick_str = rt.print_newick();
+			bool a = 1;
 		}
 	};
 }

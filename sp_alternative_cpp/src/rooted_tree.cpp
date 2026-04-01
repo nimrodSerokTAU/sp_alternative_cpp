@@ -29,10 +29,33 @@ RootedTree::RootedTree(const UnrootedTree& unrooted, RootingPoint rp) {
 
     all_nodes.reserve(unrooted.all_nodes.size());
     keys = unrooted.keys;
+
+    for (int i = 0; i < unrooted.all_nodes.size(); i++) {
+        cout << "Node " << i << " ID=" << unrooted.all_nodes[i]->id << " dist to father =" << unrooted.all_nodes[i]->branch_length <<
+            " fatherId =" << unrooted.all_nodes[i]->father_id;
+        for (int c = 0; c < unrooted.all_nodes[i]->children_ids.size(); c++) {
+            cout << " child =" << unrooted.all_nodes[i]->children_ids[c] ;
+        }
+        cout << endl;
+    }
+
+    cout << "-------------------------- before rooting ---------------------------" << endl;
+
     // copy nodes
     for (const auto& n : unrooted.all_nodes) {
         all_nodes.push_back(std::make_unique<Node>(*n));
     }
+
+    for (int i = 0; i < all_nodes.size(); i++) {
+        cout << "Node " << i << " ID=" << all_nodes[i]->id << " dist to father =" << all_nodes[i]->branch_length <<
+            " fatherId =" << all_nodes[i]->father_id;
+        for (int c = 0; c < all_nodes[i]->children_ids.size(); c++) {
+            cout << " child =" << all_nodes[i]->children_ids[c];
+        }
+        cout << endl;
+    }
+
+    //string newick_str = tree.print_newick();
 
     Node* start = all_nodes[rp.start_id].get();
     Node* end = all_nodes[rp.end_id].get();
@@ -46,6 +69,22 @@ RootedTree::RootedTree(const UnrootedTree& unrooted, RootingPoint rp) {
     
     all_nodes.push_back(std::move(new_root_ptr));
     root = all_nodes.back().get();
+
+
+    cout << "-------------------------- after adding a new root ---------------------------" << endl;
+
+
+    for (int i = 0; i < all_nodes.size(); i++) {
+        cout << "Node " << i << " ID=" << all_nodes[i]->id << " dist to father =" << all_nodes[i]->branch_length <<
+            " fatherId =" << all_nodes[i]->father_id;
+        for (int c = 0; c < all_nodes[i]->children_ids.size(); c++) {
+            cout << " child =" << all_nodes[i]->children_ids[c];
+        }
+        cout << endl;
+    }
+
+
+
 
     Node* lower_node = start;
     Node* higher_node = end;
@@ -70,6 +109,10 @@ RootedTree::RootedTree(const UnrootedTree& unrooted, RootingPoint rp) {
 	higher_node->father_id = root->id;
     higher_node->branch_length = higher_node_bl;
 
+
+
+
+
     while (prev_father_id != -1) {
         int working_node_id = prev_father_id;
 		Node* working_node = all_nodes[working_node_id].get();
@@ -84,6 +127,21 @@ RootedTree::RootedTree(const UnrootedTree& unrooted, RootingPoint rp) {
         prev_dist_to_father = working_node_to_father_bl;
         higher_node = working_node;
     }
+
+    cout << "------------------------ after rooting --------------------------" << endl;
+    for (int i = 0; i < all_nodes.size(); i++) {
+        cout << "Node " << i << " ID=" << all_nodes[i]->id << " dist to father =" << all_nodes[i]->branch_length <<
+            " fatherId =" << all_nodes[i]->father_id;
+        for (int c = 0; c < all_nodes[i]->children_ids.size(); c++) {
+            cout << " child =" << all_nodes[i]->children_ids[c];
+        }
+        cout << endl;
+    }
+
+
+
+    bool stop = 1;
+
 }
 
 void RootedTree::calc_clustal_w(std::vector<Node*> raw_nodes) {
@@ -328,6 +386,38 @@ string RootedTree::get_newick(Node* node) const {
     newick_str += to_string(node->branch_length);
     return newick_str;
 }
+
+ set<string> RootedTree::get_my_keys_set(Node* node) const {
+    set<string> keys = {};
+    if (node->children_ids.size() == 0) {
+        keys = node->keys;
+    }
+    else {
+        for (int i = 0; i < node->children_ids.size(); ++i) {
+            int child_id = node->children_ids[i];
+            Node* c = all_nodes[child_id].get();
+            set<string> set2 = get_my_keys_set(c);
+            std::set_union(
+                keys.begin(), keys.end(),
+                set2.begin(), set2.end(),
+                std::inserter(keys, keys.begin())
+            );
+        }
+    }
+    return keys;
+ }
+
+ int RootedTree::get_my_children_count(Node* node) const {
+     int children_count = 0;
+     if (node->children_ids.size() > 0) {
+         for (int i = 0; i < node->children_ids.size(); ++i) {
+             int child_id = node->children_ids[i];
+             Node* c = all_nodes[child_id].get();
+             children_count += (get_my_children_count(c) + 1);
+         }
+     }
+     return children_count;
+ }
 
 RootingPoint get_rooting_point(RootingMethods rooting_method, const UnrootedTree& unrooted) {
     // Find midpoint rooting location

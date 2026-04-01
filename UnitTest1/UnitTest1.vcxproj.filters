@@ -37,5 +37,8 @@
     <CopyFileToFolders Include="test_data\true_msa.fas">
       <Filter>test_data</Filter>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="test_data\bali_phy_msa.1.fas">
+      <Filter>test_data</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>

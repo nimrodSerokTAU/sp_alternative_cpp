@@ -33,6 +33,8 @@ public:
 
     string get_newick(Node* node) const;
     string print_newick() const;
+    set<string> get_my_keys_set(Node* node) const;
+    int get_my_children_count(Node* node) const;
 };
 
 
@@ -53,6 +55,7 @@ RootingPoint find_shallowest_tree(
     const std::vector<RootingPoint>& rooting_points);
 
 RootingPoint get_rooting_point(RootingMethods rooting_method, const UnrootedTree& unrooted);
+
 
 double longest_dist_from_virtual_root(
     const UnrootedTree& tree,
