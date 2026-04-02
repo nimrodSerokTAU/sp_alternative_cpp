@@ -82,7 +82,7 @@ void MSA::order_sequences(const std::vector<std::string>& ordered_seq_names) {
             ordered_seq.push_back(sequences[it->second]);
         }
     }
-    if (ordered_seq.size() != sequences.size()) {
+    if (ordered_seq.size() != sequences.size()) { // TODO: continue from here
         std::cerr << "Warning: sequence count mismatch during ordering" << std::endl;
     } else {
         sequences = ordered_seq;
