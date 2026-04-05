@@ -83,7 +83,7 @@ void MSA::order_sequences(const std::vector<std::string>& ordered_seq_names) {
         }
     }
     if (ordered_seq.size() != sequences.size()) { // TODO: continue from here
-        std::cerr << "Warning: sequence count mismatch during ordering" << std::endl;
+		throw std::runtime_error("Sequence count mismatch during ordering");
     } else {
         sequences = ordered_seq;
         seq_names = ordered_seq_names;
@@ -231,7 +231,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
                   << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
     }
 
-    // Weighted SP
+	// Weighted SP // TODO: change this, don't root for each model, root once and calculate the weights for each model, then calculate wSOP for each model.
     if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::W_SP)) {
         auto start = std::chrono::steady_clock::now();
         if (!config.stats_output.count(StatsOutput::ALL) && !config.stats_output.count(StatsOutput::TREE)) {

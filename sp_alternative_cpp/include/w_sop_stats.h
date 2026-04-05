@@ -41,3 +41,5 @@ public:
 
     std::vector<StatValue> get_my_features_as_list() const override;
 };
+
+void normalize(std::vector<double>& v);

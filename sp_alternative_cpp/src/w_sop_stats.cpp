@@ -38,6 +38,8 @@ std::pair<std::vector<double>, std::vector<double>> WSopStats::compute_seq_w_hen
         seq_weights_with_gap[i] /= sum_wg;
         seq_weights_no_gap[i] /= sum_ng;
     }
+	normalize(seq_weights_with_gap);
+	normalize(seq_weights_no_gap);
     return {seq_weights_with_gap, seq_weights_no_gap};
 }
 
@@ -52,13 +54,27 @@ std::vector<double> WSopStats::get_weight_list(const UnrootedTree& tree, Rooting
     for (const auto& s_name : seq_names) {
         weights.push_back(rt->seq_weight_dict[s_name]);
     }
+
     rooted_trees[key] = std::move(rt);
+ //   for (size_t i = 0; i < weights.size(); i++) {
+ //       std::cout << "Weight for sequence " << seq_names[i] << " with method " << key << ": " << weights[i] << std::endl;
+	//}
 
-
-    for (size_t i = 0; i < weights.size(); i++) {
-        std::cout << "Weight for sequence " << seq_names[i] << " with method " << key << ": " << weights[i] << std::endl;
-	}
+    normalize(weights);
     return weights;
+}
+
+void normalize(std::vector<double>& v) {
+    double sum = std::accumulate(v.begin(), v.end(), 0.0);
+
+    if (sum == 0.0) {
+        // Handle edge case: avoid division by zero
+        return; // or throw, or set uniform values
+    }
+
+    for (double& x : v) {
+        x /= sum;
+    }
 }
 
 void WSopStats::calc_seq_weights(const std::set<WeightMethods>& additional_weights,
@@ -83,11 +99,13 @@ void WSopStats::calc_seq_weights(const std::set<WeightMethods>& additional_weigh
     if (additional_weights.count(WeightMethods::CLUSTAL_MID_ROOT)) {
         seq_weights_options.push_back(get_weight_list(tree, RootingMethods::LONGEST_PATH_MID, seq_names));
         weight_names.push_back(weight_method_to_string(WeightMethods::CLUSTAL_MID_ROOT));
+        cout << "End weights calc for CLUSTAL_MID_ROOT " << endl;
     }
 
     if (additional_weights.count(WeightMethods::CLUSTAL_DIFFERENTIAL_SUM)) {
         seq_weights_options.push_back(get_weight_list(tree, RootingMethods::MIN_DIFFERENTIAL_SUM, seq_names));
         weight_names.push_back(weight_method_to_string(WeightMethods::CLUSTAL_DIFFERENTIAL_SUM));
+        cout << "End weights calc for CLUSTAL_DIFFERENTIAL_SUM " << endl;
     }
 }
 
