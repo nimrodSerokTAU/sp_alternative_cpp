@@ -18,11 +18,12 @@ public:
     ) {
         std::vector<std::string> cols;
         size_t n = labels.size();
-        cols.reserve(n * n);
+        cols.reserve(n * n / 2);
+        cols.push_back("code_subs_matrix");
 
-        for (size_t i = 0; i < n; ++i) {
-            for (size_t j = 0; j < n; ++j) {
-                cols.push_back(labels[i] + "->" + labels[j]);
+        for (size_t i = 0; i < n - 1; ++i) {
+            for (size_t j = i + 1; j < n - 1; ++j) {
+                cols.push_back(labels[i] + "<->" + labels[j]);
             }
         }
         return cols;
@@ -39,10 +40,10 @@ public:
     {
         size_t n = labels.size();
 
-        values.reserve(n * n);
+        values.reserve(n * n / 2);
 
-        for (size_t i = 0; i < n; ++i) {
-            for (size_t j = 0; j < n; ++j) {
+        for (size_t i = 0; i < n - 1; ++i) {
+            for (size_t j = i + 1; j < n - 1; ++j) {
                 values.push_back(matrix[i][j]);
             }
         }

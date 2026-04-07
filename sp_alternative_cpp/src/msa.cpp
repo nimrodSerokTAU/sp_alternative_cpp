@@ -297,8 +297,11 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
         StatsOutput::SUBS_MATRIX,
         }))
     {
-        string model_name = sp_models[0].model_name;
-        vector<string> labels;
+        unordered_map<std::string, int> code_to_index_dict = sp_models[0].code_to_index_dict;
+        vector<string> labels(subs_matrix_counts[0].size());
+        for (const auto& [code, index] : code_to_index_dict) {
+            labels[index] = code;
+        }
         SubsMatrixCounterStats subs_matrix_counter_stats(dataset_name, get_taxa_num(), get_msa_len(), subs_matrix_counts, labels);
         print_stats_file(subs_matrix_counter_stats.get_my_features_as_list(), output_dir_path,
             stats_output_to_string(StatsOutput::SUBS_MATRIX), is_init_file, subs_matrix_counter_stats.get_ordered_col_names_with_labels_value(labels), "", 0, 0);
