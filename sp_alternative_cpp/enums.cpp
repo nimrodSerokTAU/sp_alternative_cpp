@@ -32,7 +32,6 @@ unordered_map<string, StatsOutput> str_to_enum_stats_output = {
     {"K_MER", StatsOutput::K_MER},
     { "W_SP", StatsOutput::W_SP },
     { "DISTANCE_LABELS", StatsOutput::DISTANCE_LABELS },
-    {"RF_LABEL", StatsOutput::RF_LABEL},
     {"ALL", StatsOutput::ALL},
     {"ALL_FEATURES", StatsOutput::ALL_FEATURES}
 };

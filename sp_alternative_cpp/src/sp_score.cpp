@@ -98,7 +98,7 @@ std::vector<GapInterval> SPScore::compute_gap_intervals(const std::vector<char>&
     return gap_intervals_list;
 }
 
-SPScore::SpSAndGe SPScore::compute_sp_s_and_sp_ge(const std::vector<std::string>& profile, vector<vector<int>> & substitutions_matrix, bool is_using_substitutions_matrix) const {
+SPScore::SpSAndGe SPScore::compute_sp_s_and_sp_ge(const std::vector<std::string>& profile, vector<vector<int>> & substitutions_matrix, bool is_filling_substitutions_matrix) const {
     int options_count = static_cast<int>(w_matrix[0].size());
     int seq_len = static_cast<int>(profile[0].size());
     double sp_match_score = 0;
@@ -107,7 +107,7 @@ SPScore::SpSAndGe SPScore::compute_sp_s_and_sp_ge(const std::vector<std::string>
     int sp_match_count = 0;
     int sp_mismatch_count = 0;
 
-    if (is_using_substitutions_matrix) {
+    if (is_filling_substitutions_matrix) {
         substitutions_matrix.resize(options_count);
         for (int i=0; i < options_count; i++) {
             substitutions_matrix[i].resize(options_count, 0);
@@ -136,7 +136,7 @@ SPScore::SpSAndGe SPScore::compute_sp_s_and_sp_ge(const std::vector<std::string>
                         sp_mismatch_score += static_cast<double>(w_matrix[i][j]) *
                             histo_count[i] * histo_count[j];
                         sp_mismatch_count += histo_count[i] * histo_count[j];
-                        if (is_using_substitutions_matrix) {
+                        if (is_filling_substitutions_matrix) {
 							substitutions_matrix[i][j] += histo_count[i] * histo_count[j];
                         }
                     }
@@ -197,18 +197,18 @@ SPScore::SpGapOpen SPScore::compute_sp_gap_open(const std::vector<std::string>& 
     return {sp_gp_open, sp_gpo_count};
 }
 
-double SPScore::compute_efficient_sp(const std::vector<std::string>& profile, bool is_using_substitutions_matrix) const {
+double SPScore::compute_efficient_sp(const std::vector<std::string>& profile, bool is_filling_substitutions_matrix) const {
     vector<vector<int>> subs_matrix_counts;
-    auto [sp_match, sp_mismatch, sp_ge, mc, mmc, gc] = compute_sp_s_and_sp_ge(profile, subs_matrix_counts, is_using_substitutions_matrix);
+    auto [sp_match, sp_mismatch, sp_ge, mc, mmc, gc] = compute_sp_s_and_sp_ge(profile, subs_matrix_counts, is_filling_substitutions_matrix);
     auto [go_score, gpo_count] = compute_sp_gap_open(profile);
     return sp_match + sp_mismatch + sp_ge + go_score;
 }
 
-SPScore::EfficientSpParts SPScore::compute_efficient_sp_parts(const std::vector<std::string>& profile, bool is_using_substitutions_matrix) const {
-    vector<vector<int>> subs_matrix_counts;
-    auto [sp_match, sp_mismatch, sp_ge, mc, mmc, gc] = compute_sp_s_and_sp_ge(profile, subs_matrix_counts, is_using_substitutions_matrix);
+SPScore::EfficientSpParts SPScore::compute_efficient_sp_parts(const std::vector<std::string>& profile, vector<vector<int>>& subs_matrix_counts, 
+                                                              bool is_filling_substitutions_matrix) const {
+    auto [sp_match, sp_mismatch, sp_ge, mc, mmc, gc] = compute_sp_s_and_sp_ge(profile, subs_matrix_counts, is_filling_substitutions_matrix);
     auto [go_score, go_count] = compute_sp_gap_open(profile);
-    return {sp_match, sp_mismatch, go_score, sp_ge, mc, mmc, go_count, gc};
+    return {sp_match, sp_mismatch, go_score, sp_ge, mc, mmc, go_count, gc, subs_matrix_counts};
 }
 
 double SPScore::get_pair_score(int i, int j) const {

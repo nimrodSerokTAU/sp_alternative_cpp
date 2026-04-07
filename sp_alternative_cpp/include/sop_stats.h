@@ -1,6 +1,7 @@
 #pragma once
 #include "msa_basic_stats.h"
 #include "sp_score.h"
+#include "enums.h"
 #include <vector>
 #include <string>
 #include <set>
@@ -29,7 +30,7 @@ public:
     SopStats(const std::string& code, int taxa_num, int msa_length);
 
     void set_my_sop_score_parts(const SPScore& sp_score, const std::vector<std::string>& sequences,
-                                bool is_using_substitutions_matrix);
+                                vector<vector<int>>& subs_matrix_counts, const set<StatsOutput>& statsOutput);
     std::vector<std::string> get_ordered_col_names_with_model(const std::string& model_name,
                                                               double go_val, double ge_val) const;
     std::vector<StatValue> get_my_features_as_list() const override;

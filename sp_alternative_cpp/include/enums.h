@@ -36,10 +36,11 @@ enum class StatsOutput {
     TREE,
     K_MER,
     W_SP,
+    SUBS_MATRIX,
     DISTANCE_LABELS,
-    RF_LABEL,
     ALL,
-    ALL_FEATURES
+    ALL_FEATURES,
+    ALL_NO_SUBS_MATRIX,
 };
 
 set<StatsOutput> strToEnumStatsOutput(const set<string>& strings);
@@ -58,10 +59,11 @@ inline std::string stats_output_to_string(StatsOutput s) {
         case StatsOutput::TREE: return "tree";
         case StatsOutput::K_MER: return "k_mer";
         case StatsOutput::W_SP: return "w_sop";
+        case StatsOutput::SUBS_MATRIX: return "subs_matrix";
         case StatsOutput::DISTANCE_LABELS: return "distances";
-        case StatsOutput::RF_LABEL: return "rf";
         case StatsOutput::ALL: return "all_stats";
         case StatsOutput::ALL_FEATURES: return "all_features";
+        case StatsOutput::ALL_NO_SUBS_MATRIX: return "all_no_subs_matrix";
     }
     return "";
 }

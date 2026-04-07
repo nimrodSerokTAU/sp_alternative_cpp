@@ -39,7 +39,7 @@ int main()
     set<StatsOutput> resultStatsOutputSet = strToEnumStatsOutput(statsOutputSet);
 
     set<int> k_values = config["k_values"].get<set<int>>();
-	bool is_using_substitutions_matrix = config["is_using_substitutions_matrix"].get<bool>();
+	bool is_unified_file = config["is_unified_file"].get<bool>();
 
 
     int x = config["sop_calc_type"].get<int>();
@@ -53,7 +53,7 @@ int main()
         resultWeightMethodsSet,
         k_values,
         resultStatsOutputSet,
-        is_using_substitutions_matrix
+        is_unified_file
 	);
     cout << "SP Alternative (C++) - MSA Analysis Tool" << endl;
     cout << "Input directory: " << configuration.input_files_dir_path << endl;

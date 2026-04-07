@@ -28,6 +28,7 @@ namespace spalternativeUnitTests
 {
 	string blosum50Path = "D:/code/sp_alternative/sp_alternative/input_config_files/Blosum50.txt";
 	string blosum62Path = "D:/code/sp_alternative/sp_alternative/input_config_files/Blosum62.txt";
+	string nucPath = "D:/code/sp_alternative/sp_alternative/input_config_files/Nucleotides.txt";
 	string newick_of_AATF = "((((Macropus:0.051803,Monodelphis:  0.066021): 0.016682,Sarcophilus:0.068964):0.114355,((Echinops:0.104144,(Loxodonta:0.076474,Procavia:0.076193):0.011550):0.013015,((Choloepus:0.056091,Dasypus:0.040600):0.013681,(((((Callithrix:0.032131,((((Gorilla:0.007042,(Homo:0.002445,Pan:0.002450):0.001237):0.003689,Pongo:0.007508):0.002384,Nomascus:0.015696):0.004674,Macaca:0.013752):0.012205):0.029730,((Microcebus:0.037066,Otolemur:0.050935):0.008091,Tarsius:0.064938):0.007305):0.003377,Tupaia:0.090946):0.000699,(((Cavia:0.116826,(Dipodomys:0.080386,(Mus:0.040313,Rattus:0.033872):0.122329):0.013314):0.000298,Ictidomys:0.062932):0.011064,(Ochotona:0.087746,Oryctolagus:0.057769):0.035947):0.002130):0.006931,(Erinaceus:0.094727,(((((Bos:0.062659,Tursiops:0.024374):0.009782,Sus:0.064336):0.006134,Vicugna:0.049961):0.021643,Equus:0.046559):0.002728,(Sorex:0.126677,((Myotis:0.050452,Pteropus:0.047740):0.006495,(Felis:0.042414,(Canis:0.036675,(Mustela:0.027691,Ailuropoda:0.037553):0.004251):0.008141):0.019485):0.000485):0.003533):0.000528):0.005645):0.012900):0.002853):0.133251):0.019558,Ornithorhynchus:0.195576);";
 
 	UnrootedTree create_unrooted_tree_for_test() {
@@ -257,7 +258,6 @@ namespace spalternativeUnitTests
 			};
 			vector<vector<int>> substitutions_matrix;	
 			SPScore::SpSAndGe res = sp1.compute_sp_s_and_sp_ge(profile1, substitutions_matrix, false);
-
 			vector<double> vw1 = { 1.0, 1.0, 1.0 };
 			vector<vector<double>> vvw1 = { vw1 };
 			vector<double> resNaive = sp1.compute_naive_sp_score(profile1, &vvw1);
@@ -1208,9 +1208,9 @@ namespace spalternativeUnitTests
 			w_sop_ptr->calc_seq_weights(config.additional_weights, msa_ptr->sequences, msa_ptr->seq_names, ut);
 			SPScore sp(evoModel1, blosum62Path);
 			w_sop_ptr->calc_w_sp(msa_ptr->sequences, sp);
-			double henikoff_with_gaps = w_sop_ptr->sp_CLUSTAL_WEIGHTS_mid_root;
-			double expected_value = -1267.7152777777774;
-			Assert::IsTrue(abs(henikoff_with_gaps - expected_value) < 1e-10);
+			double sp_clustul_mid_root = w_sop_ptr->sp_CLUSTAL_WEIGHTS_mid_root;
+			double expected_value = -1.5516;
+			Assert::IsTrue(abs(sp_clustul_mid_root - expected_value) < 1e-4);
 		}
 
 		TEST_METHOD(calc_dseq_from_file)
@@ -1384,6 +1384,85 @@ namespace spalternativeUnitTests
 
 			string newick_str = rt.print_newick();
 			bool a = 1;
+		}
+
+		TEST_METHOD(compute_sp_s_and_sp_ge_nucleotides)
+		{
+			EvoModel evoModel1(-3, -1, "Nucleotides");
+			vector<EvoModel> models = { evoModel1 };
+			Configuration configuration1(models);
+			configuration1.is_unified_file = true;
+			SPScore sp1(evoModel1, nucPath);
+			vector<string> profile1 = {
+				"ATGTC---GT",
+				"AA-TCG--AT",
+				"AA--CGAGGT"
+			};
+			vector<vector<int>> substitutions_matrix;
+			SPScore::EfficientSpParts res = sp1.compute_efficient_sp_parts(profile1, substitutions_matrix, true);
+
+			vector<double> vw1 = { 1.0, 1.0, 1.0 };
+			vector<vector<double>> vvw1 = { vw1 };
+			vector<double> resNaive = sp1.compute_naive_sp_score(profile1, &vvw1);
+			double totalScore = res.sp_match_score + res.sp_mismatch_score + res.go_score + res.sp_score_gap_e;
+			Assert::AreEqual(totalScore, resNaive[0]);
+			Assert::AreEqual(res.sp_mismatch_score + res.sp_match_score, 9.0);
+
+			vector<int> A_vec = { 0, 2, 2, 0 };
+			vector<int> T_vec = { 2, 0, 0, 0 };
+			vector<int> G_vec = { 2, 0, 0, 0 };
+			vector<int> C_vec = { 0, 0, 0, 0 };
+			vector<vector<int>> expected_subs_matrix = { A_vec , T_vec, G_vec, C_vec };
+
+			vector<string> nucs = { "A", "T", "G", "C" };
+
+			for (int i = 0; i < nucs.size(); ++i) {
+				vector<int> expected_row = expected_subs_matrix[i];
+				for (int j = i + 1; j < nucs.size(); ++j) {
+					Assert::AreEqual(substitutions_matrix[i][j], expected_row[j]);
+				}
+			}
+		}
+
+		TEST_METHOD(print_nucleotides_res)
+		{
+			EvoModel evoModel1(-3, -1, "Nucleotides");
+			vector<EvoModel> models = { evoModel1 };
+			string trueProfilePath = "nuc_TRUE.fas";
+			string profileAPath = "nuc_test.fasta";
+			
+			Configuration configuration(
+				models,
+				SopCalcTypes::EFFICIENT,
+				"",
+				"D:/code/sp_alternative/sp_alternative/nuc_output",
+				"D:/code/sp_alternative/sp_alternative/input_config_files",
+				{},
+				{ 8, 16, 32 },
+				{ StatsOutput::ALL },
+				true
+			);
+
+			SPScore sp1(evoModel1, nucPath);
+			vector<SPScore> sp_models = { sp1 };
+			for (const auto& m : models) {
+				fs::path matrix_path = fs::path(configuration.matrix_dir_path) / m.matrix_file_name;
+				matrix_path.replace_extension(".txt");
+				sp_models.emplace_back(m, matrix_path);
+			}
+			cout << "End subs matrices: " << endl;
+
+			fs::path output_dir_path = fs::path(configuration.output_file_dir_path);
+			fs::create_directories(output_dir_path);
+
+			MSA true_msa("true");
+			true_msa.read_from_fasta(trueProfilePath);
+			
+			MSA inferred_msa("nuc_test");
+			inferred_msa.read_from_fasta(profileAPath);
+			inferred_msa.order_sequences(true_msa.seq_names);
+			inferred_msa.calc_and_print_stats(true_msa, configuration, sp_models, output_dir_path,	true_msa.tree.get(), true);
+
 		}
 	};
 }

@@ -40,7 +40,7 @@ public:
         int sp_mismatch_count;
         int ge_count;
     };
-    SpSAndGe compute_sp_s_and_sp_ge(const std::vector<std::string>& profile, vector<vector<int>>& substitutions_matrix, bool is_using_substitutions_matrix) const;
+    SpSAndGe compute_sp_s_and_sp_ge(const std::vector<std::string>& profile, vector<vector<int>>& substitutions_matrix, bool is_filling_substitutions_matrix) const;
 
     int subst(char a, char b) const;
 
@@ -50,7 +50,7 @@ public:
     };
     SpGapOpen compute_sp_gap_open(const std::vector<std::string>& profile) const;
 
-    double compute_efficient_sp(const std::vector<std::string>& profile, bool is_using_substitutions_matrix) const;
+    double compute_efficient_sp(const std::vector<std::string>& profile, bool is_filling_substitutions_matrix) const;
 
     struct EfficientSpParts {
         double sp_match_score;
@@ -61,8 +61,9 @@ public:
         int sp_mismatch_count;
         int go_count;
         int ge_count;
+        vector<vector<int>> subs_matrix_counts;
     };
-    EfficientSpParts compute_efficient_sp_parts(const std::vector<std::string>& profile, bool is_using_substitutions_matrix) const;
+    EfficientSpParts compute_efficient_sp_parts(const std::vector<std::string>& profile, vector<vector<int>>& subs_matrix_counts, bool is_filling_substitutions_matrix) const;
 
     double get_pair_score(int i, int j) const;
 

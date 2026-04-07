@@ -121,3 +121,4 @@ std::vector<Node*> get_raw_pointers_from_unique(const std::vector<std::unique_pt
     }
     return raw_nodes;
 }
+

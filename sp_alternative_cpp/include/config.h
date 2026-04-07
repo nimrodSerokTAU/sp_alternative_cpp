@@ -14,7 +14,7 @@ struct Configuration {
     std::set<WeightMethods> additional_weights;
     std::set<StatsOutput> stats_output;
     std::set<int> k_values;
-	bool is_using_substitutions_matrix;
+	bool is_unified_file;
 
     Configuration(const std::vector<EvoModel>& models_list,
                   SopCalcTypes sop_calc_type = SopCalcTypes::EFFICIENT,
@@ -24,7 +24,7 @@ struct Configuration {
                   const std::set<WeightMethods>& additional_weights = {},
                   const std::set<int>& k_values = {},
                   const std::set<StatsOutput>& stats_output = {StatsOutput::ALL},
-                  const bool is_using_substitutions_matrix = false)
+                  const bool is_unified_file = true)
         : models(models_list),
           sop_calc_type(sop_calc_type),
           input_files_dir_path(input_files_dir_path),
@@ -33,5 +33,5 @@ struct Configuration {
           additional_weights(additional_weights),
           stats_output(stats_output),
           k_values(k_values), 
-          is_using_substitutions_matrix(is_using_substitutions_matrix) {}
+          is_unified_file(is_unified_file) {}
 };

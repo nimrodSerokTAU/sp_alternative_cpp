@@ -152,5 +152,8 @@
     <ClInclude Include="include\multi_msa_service.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\subs_matrix_counter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

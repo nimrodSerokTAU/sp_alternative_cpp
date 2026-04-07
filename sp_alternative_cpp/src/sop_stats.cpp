@@ -1,4 +1,5 @@
 #include "sop_stats.h"
+#include "utils.h"
 
 SopStats::SopStats(const std::string& code, int taxa_num, int msa_length)
     : BasicStats(code, taxa_num, msa_length,
@@ -16,8 +17,16 @@ SopStats::SopStats(const std::string& code, int taxa_num, int msa_length)
                                 "sp_mismatch_count_norm", "sp_go", "sp_go_norm", "sp_ge", "sp_ge_norm"},
       gaps_agnostic_col_names{"sp_match", "sp_match_norm", "sp_mismatch", "sp_mismatch_norm"} {}
 
-void SopStats::set_my_sop_score_parts(const SPScore& sp_score, const std::vector<std::string>& sequences, bool is_using_substitutions_matrix) {
-    auto parts = sp_score.compute_efficient_sp_parts(sequences, is_using_substitutions_matrix);
+void SopStats::set_my_sop_score_parts(const SPScore& sp_score, const std::vector<std::string>& sequences, vector<vector<int>>& subs_matrix_counts, const set<StatsOutput>& statsOutput) {
+    bool is_filling_substitutions_matrix = false;
+    if (has_any(statsOutput, {
+        StatsOutput::ALL,
+        StatsOutput::SUBS_MATRIX,
+        }))
+    {
+        is_filling_substitutions_matrix = true;
+    }
+    auto parts = sp_score.compute_efficient_sp_parts(sequences, subs_matrix_counts, is_filling_substitutions_matrix);
     double number_of_pairs_with_msa_length = taxa_num * (taxa_num - 1) / 2.0 * msa_length;
 
     sp_match_count = parts.sp_match_count;
@@ -32,6 +41,7 @@ void SopStats::set_my_sop_score_parts(const SPScore& sp_score, const std::vector
     sp_match_norm = sp_match / number_of_pairs_with_msa_length;
     sp_mismatch = parts.sp_mismatch_score;
     sp_mismatch_norm = sp_mismatch / number_of_pairs_with_msa_length;
+    
 
     sp = parts.sp_match_score + parts.sp_mismatch_score + parts.go_score + parts.sp_score_gap_e;
     sp_norm = sp / number_of_pairs_with_msa_length;

@@ -8,6 +8,7 @@
 #include "kmer_stats.h"
 #include "tree_stats.h"
 #include "dist_labels_stats.h"
+#include "subs_matrix_counter.h"
 #include "utils.h"
 #include <fstream>
 #include <iostream>
@@ -147,7 +148,12 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
     DistanceLabelsStats dist_labels_stats(dataset_name, get_taxa_num(), get_msa_len());
 
     // Distance labels
-    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::DISTANCE_LABELS)) {
+    if (has_any(config.stats_output, {
+        StatsOutput::ALL,
+        StatsOutput::ALL_NO_SUBS_MATRIX,
+        StatsOutput::DISTANCE_LABELS
+        }))
+    {
         auto start = std::chrono::steady_clock::now();
         dist_labels_stats.set_my_distance_from_true(sequences, true_msa.sequences);
         print_stats_file(dist_labels_stats.get_my_features_as_list(), output_dir_path,
@@ -159,7 +165,12 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
     }
 
     // Entropy
-    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::ENTROPY)) {
+    if (has_any(config.stats_output, {
+        StatsOutput::ALL,
+        StatsOutput::ALL_NO_SUBS_MATRIX,
+        StatsOutput::ENTROPY
+        }))
+    {
         auto start = std::chrono::steady_clock::now();
         EntropyStats entropy_stats(dataset_name, get_taxa_num(), get_msa_len());
         entropy_stats.calc_entropy(sequences);
@@ -172,7 +183,12 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
     }
 
     // Gaps
-    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::GAPS)) {
+    if (has_any(config.stats_output, {
+        StatsOutput::ALL,
+        StatsOutput::ALL_NO_SUBS_MATRIX,
+        StatsOutput::GAPS
+        }))
+    {
         auto start = std::chrono::steady_clock::now();
         GapStats gaps_stats(dataset_name, get_taxa_num(), get_msa_len());
         gaps_stats.calc_gaps_values(sequences);
@@ -185,7 +201,12 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
     }
 
     // K-mer
-    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::K_MER)) {
+    if (has_any(config.stats_output, {
+        StatsOutput::ALL,
+        StatsOutput::ALL_NO_SUBS_MATRIX,
+        StatsOutput::K_MER
+        }))
+    {
         auto start = std::chrono::steady_clock::now();
         for (int k_value : config.k_values) {
             KMerStats kmer_stats(dataset_name, get_taxa_num(), get_msa_len(), k_value);
@@ -201,7 +222,12 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
     }
 
     // Tree
-    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::TREE)) {
+    if (has_any(config.stats_output, {
+        StatsOutput::ALL,
+        StatsOutput::ALL_NO_SUBS_MATRIX,
+        StatsOutput::TREE
+        }))
+    {
         auto start = std::chrono::steady_clock::now();
         build_nj_tree();
         TreeStats tree_stats(dataset_name, get_taxa_num(), get_msa_len());
@@ -216,11 +242,19 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
     }
 
     // SP/SOP
-    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::SP)) {
+    vector<vector<int>>subs_matrix_counts;
+
+    if (has_any(config.stats_output, {
+            StatsOutput::ALL,
+            StatsOutput::ALL_NO_SUBS_MATRIX,
+            StatsOutput::SUBS_MATRIX,
+            StatsOutput::SP
+        }))
+    {
         auto start = std::chrono::steady_clock::now();
         for (const auto& sp : sp_models) {
             SopStats sop_stats(dataset_name, get_taxa_num(), get_msa_len());
-            sop_stats.set_my_sop_score_parts(sp, sequences, config.is_using_substitutions_matrix);
+            sop_stats.set_my_sop_score_parts(sp, sequences, subs_matrix_counts, config.stats_output);
             print_stats_file(sop_stats.get_my_features_as_list(), output_dir_path,
                               stats_output_to_string(StatsOutput::SP), is_init_file,
                               sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost),
@@ -231,10 +265,16 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
                   << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
     }
 
-	// Weighted SP // TODO: change this, don't root for each model, root once and calculate the weights for each model, then calculate wSOP for each model.
-    if (config.stats_output.count(StatsOutput::ALL) || config.stats_output.count(StatsOutput::W_SP)) {
+	// Weighted SP 
+    // // TODO: change this, don't root for each model, root once and calculate the weights for each model, then calculate wSOP for each model.
+    if (has_any(config.stats_output, {
+        StatsOutput::ALL,
+        StatsOutput::ALL_NO_SUBS_MATRIX,
+        StatsOutput::W_SP
+        }))
+    {
         auto start = std::chrono::steady_clock::now();
-        if (!config.stats_output.count(StatsOutput::ALL) && !config.stats_output.count(StatsOutput::TREE)) {
+        if (config.stats_output.count(StatsOutput::W_SP)) {
             build_nj_tree();
         }
         for (const auto& sp : sp_models) {
@@ -249,6 +289,19 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
         auto end = std::chrono::steady_clock::now();
         std::cout << "Elapsed time for wSop: "
                   << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
+    }
+    
+    // Subs Matrix Counter
+    if (has_any(config.stats_output, {
+        StatsOutput::ALL,
+        StatsOutput::SUBS_MATRIX,
+        }))
+    {
+        string model_name = sp_models[0].model_name;
+        vector<string> labels;
+        SubsMatrixCounterStats subs_matrix_counter_stats(dataset_name, get_taxa_num(), get_msa_len(), subs_matrix_counts, labels);
+        print_stats_file(subs_matrix_counter_stats.get_my_features_as_list(), output_dir_path,
+            stats_output_to_string(StatsOutput::SUBS_MATRIX), is_init_file, subs_matrix_counter_stats.get_ordered_col_names_with_labels_value(labels), "", 0, 0);
     }
 }
 
@@ -304,3 +357,4 @@ void MSA::print_to_fasta_file(const std::filesystem::path& dir_path) const {
         outfile << sequences[i] << "\n";
     }
 }
+

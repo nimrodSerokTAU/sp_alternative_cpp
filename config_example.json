@@ -24,6 +24,6 @@
 	"stats_output": ["ALL"],
 	"input_files_dir_path": "D:/code/sp_alternative/sp_alternative/example_data/alternative_msas",
 	"output_file_dir_path": "D:/code/sp_alternative/output",
-	"is_using_substitutions_matrix": false,
+	"is_unified_file": true,
 	"matrix_dir_path": "D:/code/sp_alternative/sp_alternative/input_config_files"
 }

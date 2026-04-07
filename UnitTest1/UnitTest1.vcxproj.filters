@@ -40,5 +40,11 @@
     <CopyFileToFolders Include="test_data\bali_phy_msa.1.fas">
       <Filter>test_data</Filter>
     </CopyFileToFolders>
+    <CopyFileToFolders Include="test_data\nuc_test.fasta">
+      <Filter>test_data</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="test_data\nuc_TRUE.fas">
+      <Filter>test_data</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>
