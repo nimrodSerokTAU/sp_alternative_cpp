@@ -1,4 +1,4 @@
-#include "../sp_alternative_cpp/include/enums.h"
+#include "enums.h"
 #include <unordered_map>
 #include <set>
 

@@ -131,11 +131,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="enums.cpp" />
     <ClCompile Include="sp_alternative_cpp.cpp" />
     <ClCompile Include="src\distance_calc.cpp" />
     <ClCompile Include="src\dist_labels_stats.cpp" />
     <ClCompile Include="src\entropy_stats.cpp" />
+    <ClCompile Include="src\enums.cpp" />
     <ClCompile Include="src\gaps_stats.cpp" />
     <ClCompile Include="src\global_alignment.cpp" />
     <ClCompile Include="src\kmer_stats.cpp" />
@@ -148,7 +148,6 @@
     <ClCompile Include="src\sop_stats.cpp" />
     <ClCompile Include="src\sp_score.cpp" />
     <ClCompile Include="src\tree_stats.cpp" />
-    <ClCompile Include="src\unit_test_tree.cpp" />
     <ClCompile Include="src\unrooted_tree.cpp" />
     <ClCompile Include="src\utils.cpp" />
     <ClCompile Include="src\w_sop_stats.cpp" />
