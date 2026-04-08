@@ -138,11 +138,20 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
                                  const std::filesystem::path& output_dir_path,
                                  const UnrootedTree* true_tree,
                                  bool is_init_file) {
+    vector<vector<StatValue>>data;
+    vector<vector<string>>data_names;
+
     // Basic stats
     {
         std::vector<std::string> basic_cols = {"code", "taxa_num", "msa_length"};
         std::vector<StatValue> basic_vals = {StatValue(dataset_name), StatValue(get_taxa_num()), StatValue(get_msa_len())};
-        print_stats_file(basic_vals, output_dir_path, "basic_stats", is_init_file, basic_cols);
+        if (config.is_unified_file) {
+            data.push_back(basic_vals);
+            data_names.push_back(basic_cols);
+        }
+        else {
+            print_stats_files(basic_vals, output_dir_path, "basic_stats", is_init_file, basic_cols);
+        }
     }
 
     DistanceLabelsStats dist_labels_stats(dataset_name, get_taxa_num(), get_msa_len());
@@ -156,9 +165,15 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
     {
         auto start = std::chrono::steady_clock::now();
         dist_labels_stats.set_my_distance_from_true(sequences, true_msa.sequences);
-        print_stats_file(dist_labels_stats.get_my_features_as_list(), output_dir_path,
-                          stats_output_to_string(StatsOutput::DISTANCE_LABELS), is_init_file,
-                          dist_labels_stats.get_ordered_col_names());
+        if (config.is_unified_file) {
+            data.push_back(dist_labels_stats.get_my_features_as_list());
+            data_names.push_back(dist_labels_stats.get_ordered_col_names());
+        }
+        else {
+            print_stats_files(dist_labels_stats.get_my_features_as_list(), output_dir_path,
+                stats_output_to_string(StatsOutput::DISTANCE_LABELS), is_init_file,
+                dist_labels_stats.get_ordered_col_names());
+        }
         auto end = std::chrono::steady_clock::now();
         std::cout << "Elapsed time for Labels: "
                   << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
@@ -174,9 +189,15 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
         auto start = std::chrono::steady_clock::now();
         EntropyStats entropy_stats(dataset_name, get_taxa_num(), get_msa_len());
         entropy_stats.calc_entropy(sequences);
-        print_stats_file(entropy_stats.get_my_features_as_list(), output_dir_path,
-                          stats_output_to_string(StatsOutput::ENTROPY), is_init_file,
-                          entropy_stats.get_ordered_col_names());
+        if (config.is_unified_file) {
+            data.push_back(entropy_stats.get_my_features_as_list());
+            data_names.push_back(entropy_stats.get_ordered_col_names());
+        }
+        else {
+            print_stats_files(entropy_stats.get_my_features_as_list(), output_dir_path,
+                stats_output_to_string(StatsOutput::ENTROPY), is_init_file,
+                entropy_stats.get_ordered_col_names());
+        }
         auto end = std::chrono::steady_clock::now();
         std::cout << "Elapsed time for Entropy: "
                   << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
@@ -192,9 +213,15 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
         auto start = std::chrono::steady_clock::now();
         GapStats gaps_stats(dataset_name, get_taxa_num(), get_msa_len());
         gaps_stats.calc_gaps_values(sequences);
-        print_stats_file(gaps_stats.get_my_features_as_list(), output_dir_path,
-                          stats_output_to_string(StatsOutput::GAPS), is_init_file,
-                          gaps_stats.get_ordered_col_names());
+        if (config.is_unified_file) {
+            data.push_back(gaps_stats.get_my_features_as_list());
+            data_names.push_back(gaps_stats.get_ordered_col_names());
+        }
+        else {
+            print_stats_files(gaps_stats.get_my_features_as_list(), output_dir_path,
+                stats_output_to_string(StatsOutput::GAPS), is_init_file,
+                gaps_stats.get_ordered_col_names());
+        }
         auto end = std::chrono::steady_clock::now();
         std::cout << "Elapsed time for Gaps: "
                   << std::chrono::duration<double>(end - start).count() << " seconds" << std::endl;
@@ -211,10 +238,16 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
         for (int k_value : config.k_values) {
             KMerStats kmer_stats(dataset_name, get_taxa_num(), get_msa_len(), k_value);
             kmer_stats.set_k_mer_features(sequences);
-            print_stats_file(kmer_stats.get_my_features_as_list(), output_dir_path,
-                              stats_output_to_string(StatsOutput::K_MER), is_init_file,
-                              kmer_stats.get_ordered_col_names_with_k_value(), "", 0, 0,
-                              std::to_string(k_value));
+            if (config.is_unified_file) {
+                data.push_back(kmer_stats.get_my_features_as_list());
+                data_names.push_back(kmer_stats.get_ordered_col_names_with_k_value());
+            }
+            else {
+                print_stats_files(kmer_stats.get_my_features_as_list(), output_dir_path,
+                    stats_output_to_string(StatsOutput::K_MER), is_init_file,
+                    kmer_stats.get_ordered_col_names_with_k_value(), "", 0, 0,
+                    std::to_string(k_value));
+            }
         }
         auto end = std::chrono::steady_clock::now();
         std::cout << "Elapsed time for Kmer: "
@@ -232,9 +265,15 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
         build_nj_tree();
         TreeStats tree_stats(dataset_name, get_taxa_num(), get_msa_len());
         tree_stats.set_tree_stats(tree->get_branches_lengths_list(), *tree, sequences, seq_names);
-        print_stats_file(tree_stats.get_my_features_as_list(), output_dir_path,
-                          stats_output_to_string(StatsOutput::TREE), is_init_file,
-                          tree_stats.get_ordered_col_names());
+        if (config.is_unified_file) {
+            data.push_back(tree_stats.get_my_features_as_list());
+            data_names.push_back(tree_stats.get_ordered_col_names());
+        }
+        else {
+            print_stats_files(tree_stats.get_my_features_as_list(), output_dir_path,
+                stats_output_to_string(StatsOutput::TREE), is_init_file,
+                tree_stats.get_ordered_col_names());
+        }
 
         auto end = std::chrono::steady_clock::now();
         std::cout << "Elapsed time for Tree: "
@@ -255,10 +294,16 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
         for (const auto& sp : sp_models) {
             SopStats sop_stats(dataset_name, get_taxa_num(), get_msa_len());
             sop_stats.set_my_sop_score_parts(sp, sequences, subs_matrix_counts, config.stats_output);
-            print_stats_file(sop_stats.get_my_features_as_list(), output_dir_path,
-                              stats_output_to_string(StatsOutput::SP), is_init_file,
-                              sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost),
-                              sp.model_name, sp.go_cost, sp.ge_cost);
+            if (config.is_unified_file) {
+                data.push_back(sop_stats.get_my_features_as_list());
+                data_names.push_back(sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost));
+            }
+            else {
+                print_stats_files(sop_stats.get_my_features_as_list(), output_dir_path,
+                    stats_output_to_string(StatsOutput::SP), is_init_file,
+                    sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost),
+                    sp.model_name, sp.go_cost, sp.ge_cost);
+            }
         }
         auto end = std::chrono::steady_clock::now();
         std::cout << "Elapsed time for regular Sop: "
@@ -281,10 +326,15 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
             WSopStats w_sop_stats(dataset_name, get_taxa_num(), get_msa_len());
             w_sop_stats.calc_seq_weights(config.additional_weights, sequences, seq_names, *tree);
             w_sop_stats.calc_w_sp(sequences, sp);
-            print_stats_file(w_sop_stats.get_my_features_as_list(), output_dir_path,
-                              stats_output_to_string(StatsOutput::W_SP), is_init_file,
-                              w_sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost),
-                              sp.model_name, sp.go_cost, sp.ge_cost);
+            if (config.is_unified_file) {
+                data.push_back(w_sop_stats.get_my_features_as_list());
+                data_names.push_back(w_sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost));
+            } else {
+                print_stats_files(w_sop_stats.get_my_features_as_list(), output_dir_path,
+                    stats_output_to_string(StatsOutput::W_SP), is_init_file,
+                    w_sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost),
+                    sp.model_name, sp.go_cost, sp.ge_cost);
+            }
         }
         auto end = std::chrono::steady_clock::now();
         std::cout << "Elapsed time for wSop: "
@@ -303,12 +353,21 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
             labels[index] = code;
         }
         SubsMatrixCounterStats subs_matrix_counter_stats(dataset_name, get_taxa_num(), get_msa_len(), subs_matrix_counts, labels);
-        print_stats_file(subs_matrix_counter_stats.get_my_features_as_list(), output_dir_path,
-            stats_output_to_string(StatsOutput::SUBS_MATRIX), is_init_file, subs_matrix_counter_stats.get_ordered_col_names_with_labels_value(labels), "", 0, 0);
+        if (config.is_unified_file) {
+            data.push_back(subs_matrix_counter_stats.get_my_features_as_list());
+            data_names.push_back(subs_matrix_counter_stats.get_ordered_col_names_with_labels_value(labels));
+        }
+        else {
+            print_stats_files(subs_matrix_counter_stats.get_my_features_as_list(), output_dir_path,
+                stats_output_to_string(StatsOutput::SUBS_MATRIX), is_init_file, subs_matrix_counter_stats.get_ordered_col_names_with_labels_value(labels), "", 0, 0);
+        }
+    }
+    if (config.is_unified_file) {
+        print_unified_stats_files(output_dir_path, is_init_file, data_names, data);
     }
 }
 
-void MSA::print_stats_file(const std::vector<StatValue>& stats_data,
+void MSA::print_stats_files(const std::vector<StatValue>& stats_data,
                              const std::filesystem::path& output_dir_path,
                              const std::string& file_name,
                              bool is_init_file,
@@ -318,8 +377,7 @@ void MSA::print_stats_file(const std::vector<StatValue>& stats_data,
                              const std::string& k_value) {
     std::string model_str;
     if (!model_name.empty()) {
-        model_str = "_" + model_name + "_GO_" + std::to_string(static_cast<int>(go_val)) +
-                    "_GE_" + std::to_string(ge_val);
+        model_str = get_model_name_suffix(model_name, go_val, ge_val);
     }
     std::string k_value_str;
     if (!k_value.empty()) {
@@ -350,6 +408,37 @@ void MSA::print_stats_file(const std::vector<StatValue>& stats_data,
         }
         outfile << "\n";
     }
+}
+
+void MSA::print_unified_stats_files(const std::filesystem::path& output_dir_path,
+                                    bool is_init_file,
+                                    const vector<vector<string>>& col_names,
+                                    const vector<vector<StatValue>>& data) {
+    
+    std::filesystem::path output_file = output_dir_path / ("unified_stats.csv");
+    std::ofstream outfile(
+        output_file,
+        is_init_file ? std::ios::out : std::ios::app
+    );
+
+    // Helper lambda to write a CSV row
+    auto write_row = [&](const auto& vec, auto formatter) {
+        outfile << formatter(vec[0][0]) << ",";
+        for (size_t j = 0; j < vec.size(); j++) {
+            for (size_t i = 1; i < vec[j].size(); ++i) {
+                outfile << formatter(vec[j][i]) << ",";
+            }
+        }
+        outfile << "\n";
+    };
+
+    if (is_init_file) {
+        write_row(col_names, [](const std::string& s) { return s; });
+    }
+
+    write_row(data, [](const auto& v) {
+        return BasicStats::stat_value_to_string(v);
+    });
 }
 
 void MSA::print_to_fasta_file(const std::filesystem::path& dir_path) const {

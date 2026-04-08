@@ -33,7 +33,7 @@ public:
                                const UnrootedTree* true_tree,
                                bool is_init_file);
 
-    static void print_stats_file(const std::vector<StatValue>& stats_data,
+    static void print_stats_files(const std::vector<StatValue>& stats_data,
                                   const std::filesystem::path& output_dir_path,
                                   const std::string& file_name,
                                   bool is_init_file,
@@ -41,6 +41,11 @@ public:
                                   const std::string& model_name = "",
                                   double go_val = 0, double ge_val = 0,
                                   const std::string& k_value = "");
+
+    static void print_unified_stats_files(const std::filesystem::path& output_dir_path,
+                                          bool is_init_file,
+                                          const vector<vector<string>>& col_names,
+                                          const vector<vector<StatValue>>& data);
 
     void print_to_fasta_file(const std::filesystem::path& dir_path) const;
 };

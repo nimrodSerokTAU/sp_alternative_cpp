@@ -2,6 +2,7 @@
 #include <numeric>
 #include <iostream>
 #include <chrono>
+#include "utils.h"
 
 WSopStats::WSopStats(const std::string& code, int taxa_num, int msa_length)
     : BasicStats(code, taxa_num, msa_length,
@@ -129,8 +130,7 @@ void WSopStats::calc_w_sp(const std::vector<std::string>& sequences, const SPSco
 
 std::vector<std::string> WSopStats::get_ordered_col_names_with_model(const std::string& model_name,
                                                                        double go_val, double ge_val) const {
-    std::string suffix = "_" + model_name + "_GO_" + std::to_string(static_cast<int>(go_val)) +
-                          "_GE_" + std::to_string(ge_val);
+    std::string suffix = get_model_name_suffix(model_name, go_val, ge_val);
     std::vector<std::string> result;
     for (const auto& col_name : ordered_col_names) {
         result.push_back(col_name + suffix);

@@ -50,8 +50,7 @@ void SopStats::set_my_sop_score_parts(const SPScore& sp_score, const std::vector
 std::vector<std::string> SopStats::get_ordered_col_names_with_model(const std::string& model_name,
                                                                       double go_val, double ge_val) const {
     std::vector<std::string> col_names;
-    std::string suffix = "_" + model_name + "_GO_" + std::to_string(static_cast<int>(go_val)) +
-                          "_GE_" + std::to_string(ge_val);
+    std::string suffix = get_model_name_suffix(model_name, go_val, ge_val);
     for (const auto& col_name : ordered_col_names) {
         if (model_agnostic_col_names.count(col_name)) {
             col_names.push_back(col_name);

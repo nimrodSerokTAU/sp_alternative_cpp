@@ -30,9 +30,11 @@ unordered_map<string, StatsOutput> str_to_enum_stats_output = {
     {"ENTROPY", StatsOutput::ENTROPY},
     {"TREE", StatsOutput::TREE},
     {"K_MER", StatsOutput::K_MER},
-    { "W_SP", StatsOutput::W_SP },
-    { "DISTANCE_LABELS", StatsOutput::DISTANCE_LABELS },
+    {"W_SP", StatsOutput::W_SP },
+    {"SUBS_MATRIX", StatsOutput::SUBS_MATRIX },
+    {"DISTANCE_LABELS", StatsOutput::DISTANCE_LABELS },
     {"ALL", StatsOutput::ALL},
+    {"ALL_NO_SUBS_MATRIX", StatsOutput::ALL_NO_SUBS_MATRIX},
     {"ALL_FEATURES", StatsOutput::ALL_FEATURES}
 };
 

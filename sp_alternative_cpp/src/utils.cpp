@@ -122,3 +122,7 @@ std::vector<Node*> get_raw_pointers_from_unique(const std::vector<std::unique_pt
     return raw_nodes;
 }
 
+string get_model_name_suffix(const std::string& model_name, double go_val, double ge_val) {
+    return "_" + model_name + "_GO_" + std::to_string(static_cast<int>(go_val)) +
+        "_GE_" + std::to_string(ge_val);
+}
