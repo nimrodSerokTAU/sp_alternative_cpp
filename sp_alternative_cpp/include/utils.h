@@ -31,3 +31,4 @@ bool has_any(const auto& set, std::initializer_list<StatsOutput> values) {
 }
 
 string get_model_name_suffix(const std::string& model_name, double go_val, double ge_val);
+string format_double(double x);
