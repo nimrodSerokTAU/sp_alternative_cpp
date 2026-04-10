@@ -137,8 +137,8 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
                                  const std::vector<SPScore>& sp_models,
                                  const std::filesystem::path& output_dir_path,
                                  const UnrootedTree* true_tree,
-                                 bool is_init_file) {
-    unordered_map<string, int> col_names_dict;
+                                 bool is_init_file,
+                                 unordered_map<string, int>& col_names_dict) {
     vector<vector<StatValue>>data;
     vector<vector<string>>data_names;
 

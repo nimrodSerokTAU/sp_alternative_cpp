@@ -1461,7 +1461,8 @@ namespace spalternativeUnitTests
 			MSA inferred_msa("nuc_test");
 			inferred_msa.read_from_fasta(profileAPath);
 			inferred_msa.order_sequences(true_msa.seq_names);
-			inferred_msa.calc_and_print_stats(true_msa, configuration, sp_models, output_dir_path,	true_msa.tree.get(), true);
+			unordered_map<string, int> col_names_dict;
+			inferred_msa.calc_and_print_stats(true_msa, configuration, sp_models, output_dir_path,	true_msa.tree.get(), true, col_names_dict);
 
 		}
 	};

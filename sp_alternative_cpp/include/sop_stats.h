@@ -25,6 +25,7 @@ public:
     double sp_norm;
 
     std::set<std::string> model_agnostic_col_names;
+    std::set<std::string> gaps_agnostic_col_names;
 
     SopStats(const std::string& code, int taxa_num, int msa_length);
 
