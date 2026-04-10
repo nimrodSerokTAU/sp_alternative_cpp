@@ -44,8 +44,12 @@ public:
 
     static void print_unified_stats_files(const std::filesystem::path& output_dir_path,
                                           bool is_init_file,
+                                          unordered_map<string, int>& col_names_dict,
                                           const vector<vector<string>>& col_names,
                                           const vector<vector<StatValue>>& data);
+
+    static string calc_unified_stats_header(unordered_map<string, int>& col_names_dict,
+                                            const vector<vector<string>>& col_names);
 
     void print_to_fasta_file(const std::filesystem::path& dir_path) const;
 };

@@ -138,6 +138,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
                                  const std::filesystem::path& output_dir_path,
                                  const UnrootedTree* true_tree,
                                  bool is_init_file) {
+    unordered_map<string, int> col_names_dict;
     vector<vector<StatValue>>data;
     vector<vector<string>>data_names;
 
@@ -291,9 +292,10 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
         }))
     {
         auto start = std::chrono::steady_clock::now();
-        for (const auto& sp : sp_models) {
+        for (int i = 0; i < sp_models.size(); ++i) {
+            SPScore sp = sp_models[i];
             SopStats sop_stats(dataset_name, get_taxa_num(), get_msa_len());
-            sop_stats.set_my_sop_score_parts(sp, sequences, subs_matrix_counts, config.stats_output);
+            sop_stats.set_my_sop_score_parts(sp, sequences, subs_matrix_counts, config.stats_output, i);
             if (config.is_unified_file) {
                 data.push_back(sop_stats.get_my_features_as_list());
                 data_names.push_back(sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost));
@@ -363,7 +365,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
         }
     }
     if (config.is_unified_file) {
-        print_unified_stats_files(output_dir_path, is_init_file, data_names, data);
+        print_unified_stats_files(output_dir_path, is_init_file, col_names_dict, data_names, data);
     }
 }
 
@@ -410,8 +412,25 @@ void MSA::print_stats_files(const std::vector<StatValue>& stats_data,
     }
 }
 
+string MSA::calc_unified_stats_header(unordered_map<string, int>& col_names_dict, const vector<vector<string>>& col_names) {
+    string header = "code,";
+    int count = 1;
+    col_names_dict["code"] = 0;
+    for (size_t j = 0; j < col_names.size(); j++) {
+        for (size_t i = 1; i < col_names[j].size(); ++i) {
+            if (!col_names_dict.contains(col_names[j][i])) {
+                col_names_dict[col_names[j][i]] = count;
+                header += (col_names[j][i] + ",");
+                count++;
+            }
+        }
+    }
+    return header;
+}
+
 void MSA::print_unified_stats_files(const std::filesystem::path& output_dir_path,
                                     bool is_init_file,
+                                    unordered_map<string, int>& col_names_dict,
                                     const vector<vector<string>>& col_names,
                                     const vector<vector<StatValue>>& data) {
     
@@ -424,16 +443,24 @@ void MSA::print_unified_stats_files(const std::filesystem::path& output_dir_path
     // Helper lambda to write a CSV row
     auto write_row = [&](const auto& vec, auto formatter) {
         outfile << formatter(vec[0][0]) << ",";
+        int count = 1;
         for (size_t j = 0; j < vec.size(); j++) {
             for (size_t i = 1; i < vec[j].size(); ++i) {
-                outfile << formatter(vec[j][i]) << ",";
+                if (col_names_dict.contains(col_names[j][i])) {
+                    int index = col_names_dict[col_names[j][i]];
+                    if (index == count) {
+                        outfile << formatter(vec[j][i]) << ",";
+                        count++;
+                    }
+                }
             }
         }
         outfile << "\n";
     };
 
     if (is_init_file) {
-        write_row(col_names, [](const std::string& s) { return s; });
+        string header = calc_unified_stats_header(col_names_dict, col_names);
+        outfile << header << endl;
     }
 
     write_row(data, [](const auto& v) {

@@ -1422,12 +1422,14 @@ namespace spalternativeUnitTests
 					Assert::AreEqual(substitutions_matrix[i][j], expected_row[j]);
 				}
 			}
+			Assert::AreEqual(res.sp_mismatch_count, 4);
 		}
 
 		TEST_METHOD(print_nucleotides_res)
 		{
 			EvoModel evoModel1(-3, -1, "Nucleotides");
-			vector<EvoModel> models = { evoModel1 };
+			EvoModel evoModel2(-5, -1, "Nucleotides");
+			vector<EvoModel> models = { evoModel1, evoModel2};
 			string trueProfilePath = "nuc_TRUE.fas";
 			string profileAPath = "nuc_test.fasta";
 			
@@ -1442,9 +1444,7 @@ namespace spalternativeUnitTests
 				{ StatsOutput::ALL },
 				true
 			);
-
-			SPScore sp1(evoModel1, nucPath);
-			vector<SPScore> sp_models = { sp1 };
+			vector<SPScore> sp_models = {  };
 			for (const auto& m : models) {
 				fs::path matrix_path = fs::path(configuration.matrix_dir_path) / m.matrix_file_name;
 				matrix_path.replace_extension(".txt");

@@ -13,13 +13,13 @@ SopStats::SopStats(const std::string& code, int taxa_num, int msa_length)
       sp_match(-1), sp_match_norm(-1),
       sp_mismatch(-1), sp_mismatch_norm(-1),
       sp(-1), sp_norm(-1),
-      model_agnostic_col_names{"sp_match_count", "sp_match_count_norm", "sp_mismatch_count",
-                                "sp_mismatch_count_norm", "sp_go", "sp_go_norm", "sp_ge", "sp_ge_norm"},
-      gaps_agnostic_col_names{"sp_match", "sp_match_norm", "sp_mismatch", "sp_mismatch_norm"} {}
+      
+      model_agnostic_col_names{ "sp_match_count", "sp_match_count_norm", "sp_mismatch_count","sp_mismatch_count_norm" } {}
 
-void SopStats::set_my_sop_score_parts(const SPScore& sp_score, const std::vector<std::string>& sequences, vector<vector<int>>& subs_matrix_counts, const set<StatsOutput>& statsOutput) {
+void SopStats::set_my_sop_score_parts(const SPScore& sp_score, const std::vector<std::string>& sequences, vector<vector<int>>& subs_matrix_counts, 
+                                      const set<StatsOutput>& statsOutput, const int iteration) {
     bool is_filling_substitutions_matrix = false;
-    if (has_any(statsOutput, {
+    if (iteration == 0 && has_any(statsOutput, {
         StatsOutput::ALL,
         StatsOutput::SUBS_MATRIX,
         }))
@@ -53,9 +53,7 @@ std::vector<std::string> SopStats::get_ordered_col_names_with_model(const std::s
     std::string suffix = get_model_name_suffix(model_name, go_val, ge_val);
     for (const auto& col_name : ordered_col_names) {
         if (model_agnostic_col_names.count(col_name)) {
-            col_names.push_back(col_name);
-        } else if (gaps_agnostic_col_names.count(col_name)) {
-            col_names.push_back(col_name + "_" + model_name);
+                col_names.push_back(col_name);
         } else {
             col_names.push_back(col_name + suffix);
         }
