@@ -136,6 +136,7 @@ int MSA::get_taxa_num() const {
 void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
                                  const std::vector<SPScore>& sp_models,
                                  const std::filesystem::path& output_dir_path,
+                                 const std::string& batch_name,
                                  const UnrootedTree* true_tree,
                                  bool is_init_file,
                                  unordered_map<string, int>& col_names_dict) {
@@ -365,7 +366,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
         }
     }
     if (config.is_unified_file) {
-        print_unified_stats_files(output_dir_path, is_init_file, col_names_dict, data_names, data);
+        print_unified_stats_files(output_dir_path, batch_name, is_init_file, col_names_dict, data_names, data);
     }
 }
 
@@ -429,12 +430,13 @@ string MSA::calc_unified_stats_header(unordered_map<string, int>& col_names_dict
 }
 
 void MSA::print_unified_stats_files(const std::filesystem::path& output_dir_path,
+                                    const string& batch_name,
                                     bool is_init_file,
                                     unordered_map<string, int>& col_names_dict,
                                     const vector<vector<string>>& col_names,
                                     const vector<vector<StatValue>>& data) {
     
-    std::filesystem::path output_file = output_dir_path / ("unified_stats.csv");
+    std::filesystem::path output_file = output_dir_path / ("unified_stats_" + batch_name + ".csv");
     std::ofstream outfile(
         output_file,
         is_init_file ? std::ios::out : std::ios::app

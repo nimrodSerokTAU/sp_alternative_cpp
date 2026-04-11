@@ -1462,7 +1462,7 @@ namespace spalternativeUnitTests
 			inferred_msa.read_from_fasta(profileAPath);
 			inferred_msa.order_sequences(true_msa.seq_names);
 			unordered_map<string, int> col_names_dict;
-			inferred_msa.calc_and_print_stats(true_msa, configuration, sp_models, output_dir_path,	true_msa.tree.get(), true, col_names_dict);
+			inferred_msa.calc_and_print_stats(true_msa, configuration, sp_models, output_dir_path, "t1", true_msa.tree.get(), true, col_names_dict);
 
 		}
 	};

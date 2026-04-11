@@ -30,6 +30,7 @@ public:
     void calc_and_print_stats(const MSA& true_msa, const Configuration& config,
                                const std::vector<SPScore>& sp_models,
                                const std::filesystem::path& output_dir_path,
+                               const std::string& batch_name,
                                const UnrootedTree* true_tree,
                                bool is_init_file,
                                unordered_map<string, int>& col_names_dict);
@@ -44,10 +45,11 @@ public:
                                   const std::string& k_value = "");
 
     static void print_unified_stats_files(const std::filesystem::path& output_dir_path,
-                                          bool is_init_file,
-                                          unordered_map<string, int>& col_names_dict,
-                                          const vector<vector<string>>& col_names,
-                                          const vector<vector<StatValue>>& data);
+                                   const std::string& batch_name,
+                                bool is_init_file,
+                                unordered_map<string, int>& col_names_dict,
+                                const vector<vector<string>>& col_names,
+                                const vector<vector<StatValue>>& data);
 
     static string calc_unified_stats_header(unordered_map<string, int>& col_names_dict,
                                             const vector<vector<string>>& col_names);
