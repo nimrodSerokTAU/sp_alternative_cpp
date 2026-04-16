@@ -19,9 +19,19 @@ using namespace std;
 
 using json = nlohmann::json;
 
-int main()
+int main(int argc, char* argv[])
 {
-    std::ifstream f("../config.json");
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <config_file_path>" << std::endl;
+        return 1;
+    }
+    std::ifstream f(argv[1]);
+    if (!f.is_open()) {
+        std::cerr << "Error: could not open config file: " << argv[1] << std::endl;
+        return 1;
+    }
+
+    //std::ifstream f("../config.json");
     json config = json::parse(f);
     std::vector<EvoModel> models;
     for (const auto& modelConfig : config["models_list"]) {
@@ -67,5 +77,5 @@ int main()
         return 1;
     }
 
-    return 0;;
+    return 0;
 }
