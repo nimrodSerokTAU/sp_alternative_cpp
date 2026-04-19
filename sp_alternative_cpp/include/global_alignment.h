@@ -35,7 +35,7 @@ class GlobalAlign {
 public:
     std::string seq_a;
     std::string seq_b;
-    std::vector<std::vector<int>> matching_matrix;
+    std::vector<std::vector<double>> matching_matrix;
     std::unordered_map<std::string, int> codes_dict_to_inx;
     double gs;
     double ge;

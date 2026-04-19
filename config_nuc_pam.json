@@ -13,9 +13,9 @@
 		"CLUSTAL_DIFFERENTIAL_SUM"
 	],
 	"k_values": [8, 16, 32],
-	"stats_output": ["SP"],
-	"input_files_dir_path": "D:/PhDB/papers/first/nuc_simulations/ALL_MSAs",
-	"output_file_dir_path": "D:/PhDB/papers/first/nuc_simulations/resultsSPU",
-	"is_unified_file": true,
+	"stats_output": ["SOP"],
+	"input_files_dir_path": "D:/PhDB/papers/first/nuc_simulations/MAFFT_DFT",
+	"output_file_dir_path": "D:/PhDB/papers/first/nuc_simulations/MAFFT_DFT_results",
+	"is_unified_file": false,
 	"matrix_dir_path": "D:/code/sp_alternative/sp_alternative/input_config_files"
 }

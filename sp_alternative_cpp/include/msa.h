@@ -36,6 +36,7 @@ public:
                                unordered_map<string, int>& col_names_dict);
 
     static void print_stats_files(const std::vector<StatValue>& stats_data,
+                                  const string& batch_name,
                                   const std::filesystem::path& output_dir_path,
                                   const std::string& file_name,
                                   bool is_init_file,

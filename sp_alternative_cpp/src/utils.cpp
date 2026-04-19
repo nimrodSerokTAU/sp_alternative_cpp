@@ -10,10 +10,10 @@
 
 namespace fs = std::filesystem;
 
-std::pair<std::vector<std::vector<int>>, std::unordered_map<std::string, int>>
+std::pair<std::vector<std::vector<double>>, std::unordered_map<std::string, int>>
 read_matching_matrix(const fs::path& file_path) {
     std::unordered_map<std::string, int> codes_dict_to_inx;
-    std::vector<std::vector<int>> match_matrix;
+    std::vector<std::vector<double>> match_matrix;
 
     std::ifstream infile(file_path);
     
@@ -44,7 +44,7 @@ read_matching_matrix(const fs::path& file_path) {
             bool is_first_col = true;
             while (iss >> token) {
                 if (!is_first_col) {
-                    match_matrix[l_inx - 1].push_back(std::stoi(token));
+                    match_matrix[l_inx - 1].push_back(std::stod(token));
                 }
                 is_first_col = false;
             }

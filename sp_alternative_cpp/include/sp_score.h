@@ -12,9 +12,9 @@ namespace fs = std::filesystem;
 
 class SPScore {
 public:
-    std::vector<std::vector<int>> w_matrix;
+    std::vector<std::vector<double>> w_matrix;
     std::unordered_map<std::string, int> code_to_index_dict;
-    int go_cost;
+    double go_cost;
     double ge_cost;
     std::string model_name;
 

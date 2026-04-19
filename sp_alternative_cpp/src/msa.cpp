@@ -152,7 +152,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
             data_names.push_back(basic_cols);
         }
         else {
-            print_stats_files(basic_vals, output_dir_path, "basic_stats", is_init_file, basic_cols);
+            print_stats_files(basic_vals, batch_name, output_dir_path, "basic_stats", is_init_file, basic_cols);
         }
     }
 
@@ -172,7 +172,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
             data_names.push_back(dist_labels_stats.get_ordered_col_names());
         }
         else {
-            print_stats_files(dist_labels_stats.get_my_features_as_list(), output_dir_path,
+            print_stats_files(dist_labels_stats.get_my_features_as_list(), batch_name, output_dir_path,
                 stats_output_to_string(StatsOutput::DISTANCE_LABELS), is_init_file,
                 dist_labels_stats.get_ordered_col_names());
         }
@@ -196,7 +196,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
             data_names.push_back(entropy_stats.get_ordered_col_names());
         }
         else {
-            print_stats_files(entropy_stats.get_my_features_as_list(), output_dir_path,
+            print_stats_files(entropy_stats.get_my_features_as_list(), batch_name, output_dir_path,
                 stats_output_to_string(StatsOutput::ENTROPY), is_init_file,
                 entropy_stats.get_ordered_col_names());
         }
@@ -220,7 +220,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
             data_names.push_back(gaps_stats.get_ordered_col_names());
         }
         else {
-            print_stats_files(gaps_stats.get_my_features_as_list(), output_dir_path,
+            print_stats_files(gaps_stats.get_my_features_as_list(), batch_name, output_dir_path,
                 stats_output_to_string(StatsOutput::GAPS), is_init_file,
                 gaps_stats.get_ordered_col_names());
         }
@@ -245,7 +245,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
                 data_names.push_back(kmer_stats.get_ordered_col_names_with_k_value());
             }
             else {
-                print_stats_files(kmer_stats.get_my_features_as_list(), output_dir_path,
+                print_stats_files(kmer_stats.get_my_features_as_list(), batch_name, output_dir_path,
                     stats_output_to_string(StatsOutput::K_MER), is_init_file,
                     kmer_stats.get_ordered_col_names_with_k_value(), "", 0, 0,
                     std::to_string(k_value));
@@ -272,7 +272,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
             data_names.push_back(tree_stats.get_ordered_col_names());
         }
         else {
-            print_stats_files(tree_stats.get_my_features_as_list(), output_dir_path,
+            print_stats_files(tree_stats.get_my_features_as_list(), batch_name, output_dir_path,
                 stats_output_to_string(StatsOutput::TREE), is_init_file,
                 tree_stats.get_ordered_col_names());
         }
@@ -302,7 +302,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
                 data_names.push_back(sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost));
             }
             else {
-                print_stats_files(sop_stats.get_my_features_as_list(), output_dir_path,
+                print_stats_files(sop_stats.get_my_features_as_list(), batch_name, output_dir_path,
                     stats_output_to_string(StatsOutput::SP), is_init_file,
                     sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost),
                     sp.model_name, sp.go_cost, sp.ge_cost);
@@ -333,7 +333,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
                 data.push_back(w_sop_stats.get_my_features_as_list());
                 data_names.push_back(w_sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost));
             } else {
-                print_stats_files(w_sop_stats.get_my_features_as_list(), output_dir_path,
+                print_stats_files(w_sop_stats.get_my_features_as_list(), batch_name, output_dir_path,
                     stats_output_to_string(StatsOutput::W_SP), is_init_file,
                     w_sop_stats.get_ordered_col_names_with_model(sp.model_name, sp.go_cost, sp.ge_cost),
                     sp.model_name, sp.go_cost, sp.ge_cost);
@@ -361,7 +361,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
             data_names.push_back(subs_matrix_counter_stats.get_ordered_col_names_with_labels_value(labels));
         }
         else {
-            print_stats_files(subs_matrix_counter_stats.get_my_features_as_list(), output_dir_path,
+            print_stats_files(subs_matrix_counter_stats.get_my_features_as_list(), batch_name, output_dir_path,
                 stats_output_to_string(StatsOutput::SUBS_MATRIX), is_init_file, subs_matrix_counter_stats.get_ordered_col_names_with_labels_value(labels), "", 0, 0);
         }
     }
@@ -371,6 +371,7 @@ void MSA::calc_and_print_stats(const MSA& true_msa, const Configuration& config,
 }
 
 void MSA::print_stats_files(const std::vector<StatValue>& stats_data,
+                             const string& batch_name,   
                              const std::filesystem::path& output_dir_path,
                              const std::string& file_name,
                              bool is_init_file,
@@ -387,7 +388,7 @@ void MSA::print_stats_files(const std::vector<StatValue>& stats_data,
         k_value_str = "_K" + k_value;
     }
 
-    std::filesystem::path output_file = output_dir_path / (file_name + model_str + k_value_str + ".csv");
+    std::filesystem::path output_file = output_dir_path / (batch_name + "_" + file_name + model_str + k_value_str + ".csv");
 
     if (is_init_file) {
         std::ofstream outfile(output_file);

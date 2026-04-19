@@ -84,7 +84,7 @@ void multiple_msa_calc_features_and_labels(const Configuration& config) {
             inferred_msa.order_sequences(true_msa.seq_names);
             inferred_msa.calc_and_print_stats(true_msa, config, sp_models, output_dir_path, dir_name,
                                                true_msa.tree.get(), is_init_files, col_names_dict);
-            string newick_str = inferred_msa.tree->print_newick();
+            //string newick_str = inferred_msa.tree->print_newick();
             is_init_files = false;
         }
 
