@@ -156,9 +156,6 @@ double compute_eff_d_seq(const std::vector<std::string>& profile_a, const std::v
 
 	int total_count = map_a.size();
     for (int i = 0; i < total_count; ++i) {
-        if ((map_a[i] == 0 && map_b[i] == 0) || i == 188) {
-            int a = 1;
-        }
         counts[map_a[i] * cols_b_num + map_b[i]] += 1;
 	}
 

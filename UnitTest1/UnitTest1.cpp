@@ -471,6 +471,40 @@ namespace spalternativeUnitTests
 			Assert::AreEqual(res, 0.417, 0.001);
 		}
 
+		TEST_METHOD(compute_dpos_distance_for_diff_with_gap_col)
+		{
+			vector<string> profile1 = {
+				"AATATT-G-",
+				"A--ATT-AG",
+				"A--A-T-AG"
+			};
+
+			vector<string> profile2 = {
+				"AATAT-T-G",
+				"A-A-TTA-G",
+				"A--A-TA-G"
+			};
+			double res = compute_distance(profile1, profile2, DistanceType::D_POS);
+			Assert::AreEqual(res, 0.417, 0.001);
+		}
+
+		TEST_METHOD(compute_dpos_distance_for_diff_with_gap_col_at_end)
+		{
+			vector<string> profile1 = {
+				"AATATT-G----",
+				"A--ATT-AG---",
+				"A--A-T-AG---"
+			};
+
+			vector<string> profile2 = {
+				"-A-ATAT-T-G",
+				"-A--A-TTA-G",
+				"-A---A-TA-G"
+			};
+			double res = compute_distance(profile1, profile2, DistanceType::D_POS);
+			Assert::AreEqual(res, 0.417, 0.001);
+		}
+
 		TEST_METHOD(dpos_distance_for_diff_case_a)
 		{
 			vector<string> profile1 = {
