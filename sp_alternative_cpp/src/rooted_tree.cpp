@@ -292,7 +292,7 @@ double longest_dist_from_virtual_root(
 
 string RootedTree::print_newick() const {
     string newick_str = get_newick(root) + ";";
-    cout << newick_str << std::endl;
+    // cout << newick_str << std::endl;
     return newick_str;
 
 

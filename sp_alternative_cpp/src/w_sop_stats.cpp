@@ -100,13 +100,13 @@ void WSopStats::calc_seq_weights(const std::set<WeightMethods>& additional_weigh
     if (additional_weights.count(WeightMethods::CLUSTAL_MID_ROOT)) {
         seq_weights_options.push_back(get_weight_list(tree, RootingMethods::LONGEST_PATH_MID, seq_names));
         weight_names.push_back(weight_method_to_string(WeightMethods::CLUSTAL_MID_ROOT));
-        cout << "End weights calc for CLUSTAL_MID_ROOT " << endl;
+        // cout << "End weights calc for CLUSTAL_MID_ROOT " << endl;
     }
 
     if (additional_weights.count(WeightMethods::CLUSTAL_DIFFERENTIAL_SUM)) {
         seq_weights_options.push_back(get_weight_list(tree, RootingMethods::MIN_DIFFERENTIAL_SUM, seq_names));
         weight_names.push_back(weight_method_to_string(WeightMethods::CLUSTAL_DIFFERENTIAL_SUM));
-        cout << "End weights calc for CLUSTAL_DIFFERENTIAL_SUM " << endl;
+        // cout << "End weights calc for CLUSTAL_DIFFERENTIAL_SUM " << endl;
     }
 }
 

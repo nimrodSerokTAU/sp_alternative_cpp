@@ -269,7 +269,7 @@ UnrootedTree::UnrootedTree(const std::string& newick)
 
 string UnrootedTree::print_newick() const {
 	string newick_str = get_newick(anchor) + ";";
-    cout << newick_str << std::endl;
+    //cout << newick_str << std::endl;
 	return newick_str;
 
     //std::vector<Node*> raw_nodes = get_raw_pointers_from_unique(all_nodes);
